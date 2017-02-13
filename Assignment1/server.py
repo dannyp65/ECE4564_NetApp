@@ -10,7 +10,7 @@ import wolframalpha
 import pickle
 import hashlib
 
-host = 'localhost'
+host = '172.30.45.91'
 port = 50000
 backlog = 5
 size = 1024
