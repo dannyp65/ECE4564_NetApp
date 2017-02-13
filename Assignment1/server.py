@@ -40,6 +40,7 @@ while 1:
         res = client.query(input)
         answer = next(res.results).text
 
+        #data_string = pickle.dumps(answer)
         print(answer)
         #client.send(data)
     wclient.close()
