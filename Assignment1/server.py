@@ -10,7 +10,19 @@ import wolframalpha
 import pickle
 import hashlib
 
-host = '172.30.45.91'
+def MD5_Encode(str):
+    endata = str.encode('utf-8')
+    m = hashlib.md5()
+    m.update(endata)
+    return m.hexdigest()
+def Check_Payload(str, checksum):
+    compute_checksum = MD5_Encode(str)
+    if checksum == compute_checksum:
+        return True
+    else:
+        return False
+
+host = ''
 port = 50000
 backlog = 5
 size = 1024
@@ -29,29 +41,24 @@ except socket.error as message:
 
 while 1:
     wclient, address = s.accept()
-    data = wclient.recv(size)
-    data_loaded = pickle.loads(data)
-    """""
-    #attempting checksum************
-    check1 = hashlib.md5()
-    check1.update(data_loaded)
-    check1.hexdigest()
-    """""
+    pickled_data = wclient.recv(size)
+    received_data = pickle.loads(pickled_data)
+    question = received_data[0]
+    receive_checksum = received_data[1]
+
     #if check1 == client1:
 
-    if data:
-       # print (data_loaded)
-
-        input = data_loaded
-
+    if Check_Payload(question,receive_checksum):
         appid = "27TG8H-VEQ8L3WAJ5"
         client = wolframalpha.Client(appid)
-
-        res = client.query(input)
+        res = client.query(question)
         answer = next(res.results).text
         print(answer)
-        data_string = pickle.dumps(answer)
-
-    wclient.send(data_string)
+        new_checksum = MD5_Encode(answer)
+        tuple_data = (answer, new_checksum)
+        data_send = pickle.dumps(tuple_data)
+        wclient.send(data_send)
+    else:
+        wclient.send(b'MD5 Verification Fail!')
         #print (data_string)
     wclient.close()

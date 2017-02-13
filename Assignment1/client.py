@@ -12,7 +12,7 @@ import sys
 import time
 import json
 import pickle
-
+import hashlib
 # Tweepy settings
 ckey = 'tUoMh4IoOJjspbQnP6idBat8W'
 csecret = 'NFIl06VPr4sIWSliAgy8dHSmPuZoTJNnPdkY4hKRAlxU1EKb0q'
@@ -26,6 +26,19 @@ def parse_received_text(str):
     port_num = str.split(':')[1].split('_')[0]
     question = str.split('"')[2].split('\\')[0]
     print(ip, port_num, question)
+
+def MD5_Encode(str):
+    endata = str.encode('utf-8')
+    m = hashlib.md5()
+    m.update(endata)
+    return m.hexdigest()
+def Check_Payload(str, checksum):
+    compute_checksum = MD5_Encode(str)
+    if checksum == compute_checksum:
+        return True
+    else:
+        return False
+
 
 class listener(StreamListener):
     def on_data(self, data):
@@ -50,12 +63,19 @@ class listener(StreamListener):
             print("Unable to open socket: " + str(message))
             sys.exit(1)
         print('Connected to host')
-        data_string = pickle.dumps(question)
-        s.send(data_string)
-        data = s.recv(size)
-        data_loaded = pickle.loads(data)
+        checksum = MD5_Encode(question)
+        tuple_data = (question, checksum)
+        pickle_data = pickle.dumps(tuple_data)
+        s.send(pickle_data)
+        receive_pickle = s.recv(size)
+        receive_data = pickle.loads(receive_pickle)
+        answer = receive_data[0]
+        if(Check_Payload(receive_data[0], receive_data[1])):
+            print('Answer:', answer)
+        else:
+            print('MD5 Verification Fail!')
         s.close()
-        print('Received:', data_loaded)
+
         return True
         # try:
         #     print("Found Data")
