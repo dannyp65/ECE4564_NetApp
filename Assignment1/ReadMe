@@ -17,6 +17,9 @@ Initialize process:
     1. Make sure that all the extra libraries were installed on your Rapsberry Pi (see Extra Libraries)
     2. Run client.py using python 3 (Ex: python3 client.py)
     
+  Twitter: Using any twitter account to tweet questions with format above (and the correct server's ip address)
+    the answer will be tweet back with user's twitter account tagged in it.
+    
 Extra Libraries:
   - socket
   - pickle
