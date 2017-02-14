@@ -7,6 +7,7 @@ A simple echo client that handles some exceptions
 from tweepy import Stream
 from tweepy import OAuthHandler
 from tweepy.streaming import StreamListener
+from tweepy import API
 import socket
 import sys
 import time
@@ -14,18 +15,22 @@ import json
 import pickle
 import hashlib
 # Tweepy settings
-ckey = 'tUoMh4IoOJjspbQnP6idBat8W'
-csecret = 'NFIl06VPr4sIWSliAgy8dHSmPuZoTJNnPdkY4hKRAlxU1EKb0q'
-atoken = '776215902224343040-jexMVewgSgJTZp3NTC5VU8RjYBvXYjy'
-asecret = 'WDh56LvfK1NrNEPCZgarFzeLwvp6Pl3QAN17GtaPetiIW'
+ckey = 'JlBGZm3es4ElEWGkBTb0DClgk'
+csecret = 'uEXQ6UWbqBnlewHVWS3IZIkyjYwjIZH4CC9RlL4p4bONOp6UgK'
+atoken = '831269027032997893-0QUBo1qHqWAvwqaEBmdfTHYXOZD1WVC'
+asecret = 'ThaeUTqMis9MACGLuClIOYRCZcCPCcrCFC4D5Rq77WRNg'
 
+auth = OAuthHandler(ckey, csecret)
+auth.set_access_token(atoken, asecret)
+twitterAPI = API(auth)
 
-def parse_received_text(str):
-    global ip, port_num, question
+def parse_received_text(str, user):
+    global ip, port_num, question, replyID
     ip = str.split(':')[0].split('#')[1]
     port_num = str.split(':')[1].split('_')[0]
     question = str.split('"')[2].split('\\')[0]
-    print(ip, port_num, question)
+    replyID = user.split('"screen_name": "')[1].split('"')[0]
+    #print(ip, port_num, question)
 
 def MD5_Encode(str):
     endata = str.encode('utf-8')
@@ -43,16 +48,19 @@ def Check_Payload(str, checksum):
 class listener(StreamListener):
     def on_data(self, data):
         tweet_data = json.loads(data)
+        tweet_write_to_file = json.dumps(tweet_data)
+        id_text = json.dumps(tweet_data['id'])
+        #print(id_text)
+        user_text = json.dumps(tweet_data['user'])
         tweet_text = json.dumps(tweet_data['text'])
-        print(tweet_text)
-        parse_received_text(tweet_text)
-        # with open('streamed_tweets.txt', 'a') as tf:
-        #     tf.write(tweet_text)
+        parse_received_text(tweet_text, user_text)
+        #print(replyID)
+        with open('streamed_tweets.txt', 'a') as tf:
+            tf.write(tweet_write_to_file)
         host = ip
         port = int(port_num)
         size = 1024
         s = None
-        print('IP', ip, 'PORT', port_num)
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.connect((host, port))
@@ -72,6 +80,11 @@ class listener(StreamListener):
         answer = receive_data[0]
         if(Check_Payload(receive_data[0], receive_data[1])):
             print('Answer:', answer)
+            replyText = '@' + replyID + ' #"' + answer + '"'
+            if len(replyText) > 140:
+                replyText = replyText[0:139] + '…'
+            twitterAPI.update_status(status=replyText, in_reply_to_status_id=id_text)
+            print('Tweet replied')
         else:
             print('MD5 Verification Fail!')
         s.close()
@@ -94,12 +107,9 @@ class listener(StreamListener):
 
 if __name__ == '__main__':
     l = listener()
-    auth = OAuthHandler(ckey, csecret)
-    auth.set_access_token(atoken, asecret)
-
     twitterStream = Stream(auth, l)
     print("Listening")
-    twitterStream.filter(track=['#172.30.102.140:50003_'])
+    twitterStream.filter(track=['team16_RPI'])
 
 
 # host settings - Tweet_Ex [@username #host:port_"What is a question?"]
