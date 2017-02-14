@@ -56,7 +56,7 @@ except socket.error as message: #error handling
         s.close()
     print ("Could not open socket: " + str(message))
     sys.exit(1)
-
+print('Server Connected')
 while 1:
     wclient, address = s.accept()               # accept request from a client
     pickled_data = wclient.recv(size)           # received a pickled data
@@ -65,22 +65,27 @@ while 1:
     # store the question and checksum value from received tuple into variables
     question = received_data[0]
     receive_checksum = received_data[1]
+    print('Payload Received\nChecking MD5 Checksum')
 
 
     if Check_Payload(question,receive_checksum):# checking if the the checksum to see if the information is correct
+        print('Checksum Verified')
         #connect to wolfram server
         appid = "27TG8H-VEQ8L3WAJ5"
         client = wolframalpha.Client(appid)
-
+        print('Question: ', question)
         res = client.query(question)            # send the question to wolfram
+        print('Question Sent to Wolfram API')
         try:
             answer = next(res.results).text         # receive the answer
+            print('Answer:')
             print(answer)
 
             new_checksum = MD5_Encode(answer)       # generate a checksum for the answer
             tuple_data = (answer, new_checksum)     # pack answer and checksum into tuple
             data_send = pickle.dumps(tuple_data)    # pickle the data
             wclient.send(data_send)                 # send data back to the client
+            print('Sending Answer')
         except StopIteration:
             print(errorM)
             new_checksum = MD5_Encode(errorM)  # generate a checksum for the answer
@@ -88,6 +93,7 @@ while 1:
             data_send = pickle.dumps(tuple_data)  # pickle the data
             wclient.send(data_send)
     else: # if checksum not correct, send an error message to the client
+        print('MD5 Checksum Not Verified')
         wclient.send(b'MD5 Verification Fail!')
     # close the connection with client
     wclient.close()

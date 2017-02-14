@@ -3,7 +3,7 @@
 """
 ECE4564: Network Application - Spring 2017
 Instructor:     William O. Plymale
-Assignment:     Assignment 1 - twitter Inquirer
+Assignment:     Assignment 1 - Twitter Inquirer
 Date:           02/13/2017
 File name:      client.py
 Developer:      Team 16 - Anup Jasani, John Stradling, Kenta Yoshimura, Nhan Pham
@@ -24,7 +24,7 @@ import time
 import json
 import pickle
 import hashlib
-# Tweepy settings
+# Tweepy API settings
 ckey = 'JlBGZm3es4ElEWGkBTb0DClgk'
 csecret = 'uEXQ6UWbqBnlewHVWS3IZIkyjYwjIZH4CC9RlL4p4bONOp6UgK'
 atoken = '831269027032997893-0QUBo1qHqWAvwqaEBmdfTHYXOZD1WVC'
@@ -40,7 +40,7 @@ def parse_received_text(str, user):
     port_num = str.split(':')[1].split('_')[0]
     question = str.split('"')[2].split('\\')[0]
     replyID = user.split('"screen_name": "')[1].split('"')[0]
-    #print(ip, port_num, question)
+    print('Parsed Through Question Tweet')
 
 #this function generates a MD5 checksum value from string
 def MD5_Encode(str):
@@ -62,41 +62,40 @@ def Check_Payload(str, checksum):
 
 class listener(StreamListener):
     def on_data(self, data):
+        print('Found Question Tweet')
         tweet_data = json.loads(data)
-        tweet_write_to_file = json.dumps(tweet_data)
         id_text = json.dumps(tweet_data['id'])
-        #print(id_text)
         user_text = json.dumps(tweet_data['user'])
         tweet_text = json.dumps(tweet_data['text'])
         parse_received_text(tweet_text, user_text)
-        #print(replyID)
-        with open('streamed_tweets.txt', 'a') as tf:
-            tf.write(tweet_write_to_file)
         host = ip
         port = int(port_num)
         size = 1024
         s = None
         try:
+            print('Connecting to Server')
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # Create a socket object that use IPv4 and TCP
             s.connect((host, port))
-        # except socket.error, (value,message):
         except socket.error as message:
             if s:
                 s.close()
             print("Unable to open socket: " + str(message))
             sys.exit(1)
-        print('Connected to host')
+        print('Connected to Server')
 
         checksum = MD5_Encode(question)             # generate a MD5 cheksum value for the question
         tuple_data = (question, checksum)           # pack the question and checksum value into a tuple
         pickle_data = pickle.dumps(tuple_data)      # pickling the tuple
+        print('Sending Question Payload to Server')
         s.send(pickle_data)                         # send pickled data to the server
         receive_pickle = s.recv(size)               # receive data from the server
         receive_data = pickle.loads(receive_pickle) # unpickling the data
         answer = receive_data[0]                    # extract the answer
+        print('Payload Received\nChecking MD5 Checksum')
 
         #checking if the receive answer is authentic
         if(Check_Payload(receive_data[0], receive_data[1])):
+            print('Checksum Verified')
             print('Answer:', answer)
             replyText = '@' + replyID + ' #"' + answer + '"'
             if len(replyText) > 140:
@@ -106,29 +105,14 @@ class listener(StreamListener):
         else:
             print('MD5 Verification Fail!')
         s.close()
-
         return True
-        # try:
-        #     print("Found Data")
-        #     print(data)
-        #     return True
-        # except BaseException as e:
-        #     print('Failed onData,', str(e))
-        #     time.sleep(5)
 
     def on_error(self, status):
-        # if status == 420:
-        #     print('Exceeded number of attempts to connect. Disconnecting stream.')
-        #     print(status)
-        #     return False
         print(status)
 
 if __name__ == '__main__':
     l = listener()
     twitterStream = Stream(auth, l)
-    print("Listening")
+    print("Twitter Stream Listening for @team16_RPI")
     twitterStream.filter(track=['team16_RPI'])
-
-
-# host settings - Tweet_Ex [@username #host:port_"What is a question?"]
 
