@@ -1,0 +1,16 @@
+Interperter: Python 3.6 and above
+
+Initialize process:
+  Server Raspberry Pi:
+    1. Use command
+  Client Raspberry Pi:
+    1. Make sure that all the extra libraries were installed on your Rapsberry Pi (see Extra Libraries)
+    2. Run
+    
+Extra Libraries:
+  - socket
+  - pickle
+  - tweepy
+  - hashlib
+  - wolframalpha
+  - json
