@@ -103,10 +103,10 @@ class listener(StreamListener):
         if (Check_Payload(receive_data[0], receive_data[1])):
             print('Checksum Verified')
             print('Answer:', answer)
-            replyText = '@' + replyID + ' #"' + answer + '"'
-            if len(replyText) > 140:
+            replyText = '@' + replyID + ' #"' + answer + '"'    # constructs the reply Tweet
+            if len(replyText) > 140:    # limits the reply tweet to 140 characters
                 replyText = replyText[0:139] + '…'
-            twitterAPI.update_status(status=replyText, in_reply_to_status_id=id_text)
+            twitterAPI.update_status(status=replyText, in_reply_to_status_id=id_text)   # sends the reply
             print('Tweet replied')
         else:
             print('MD5 Verification Fail!')
