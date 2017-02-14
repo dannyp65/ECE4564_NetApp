@@ -26,8 +26,8 @@ import pickle
 import hashlib
 
 # Tweepy API settings
-ckey = 'JlBGZm3es4ElEWGkBTb0DClgk'
-csecret = 'uEXQ6UWbqBnlew1HVWS3IZIkyjYwjIZH4CC9RlL4p4bONOp6UgK'
+ckey = 'Uifc18FYAXeIGj5dTeHO4tdfc'
+csecret = 'J6KFnRGTAiJ0zhtazl0h6jRdw3y7u4ThnwR55w660TQRu2cXYF'
 atoken = '831269027032997893-0QUBo1qHqWAvwqaEBmdfTHYXOZD1WVC'
 asecret = 'ThaeUTqMis9MACGLuClIOYRCZcCPCcrCFC4D5Rq77WRNg'
 
