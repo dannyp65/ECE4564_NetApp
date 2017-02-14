@@ -45,7 +45,7 @@ port = 50000
 backlog = 5
 size = 1024
 s = None
-errorM = "Error: Data has been corrupted.  Incorrect md5 value!"
+errorM = "Error: Invalid Question"
 try:
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # Create a socket object that use IPv4 and TCP
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR,1)
@@ -73,16 +73,21 @@ while 1:
         client = wolframalpha.Client(appid)
 
         res = client.query(question)            # send the question to wolfram
-        answer = next(res.results).text         # receive the answer
-        print(answer)
+        try:
+            answer = next(res.results).text         # receive the answer
+            print(answer)
 
-        new_checksum = MD5_Encode(answer)       # generate a checksum for the answer
-        tuple_data = (answer, new_checksum)     # pack answer and checksum into tuple
-        data_send = pickle.dumps(tuple_data)    # pickle the data
-        wclient.send(data_send)                 # send data back to the client
-
+            new_checksum = MD5_Encode(answer)       # generate a checksum for the answer
+            tuple_data = (answer, new_checksum)     # pack answer and checksum into tuple
+            data_send = pickle.dumps(tuple_data)    # pickle the data
+            wclient.send(data_send)                 # send data back to the client
+        except StopIteration:
+            print(errorM)
+            new_checksum = MD5_Encode(errorM)  # generate a checksum for the answer
+            tuple_data = (errorM, new_checksum)  # pack answer and checksum into tuple
+            data_send = pickle.dumps(tuple_data)  # pickle the data
+            wclient.send(data_send)
     else: # if checksum not correct, send an error message to the client
         wclient.send(b'MD5 Verification Fail!')
-
     # close the connection with client
     wclient.close()
