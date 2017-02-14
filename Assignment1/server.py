@@ -41,7 +41,7 @@ def Check_Payload(str, checksum):
 # end Check_Payload function
 
 host = ''
-port = 50000
+port = 50003
 backlog = 5
 size = 1024
 s = None
