@@ -21,24 +21,27 @@ import wolframalpha
 import pickle
 import hashlib
 
-#this function generates a MD5 checksum value from string
+
+# this function generates a MD5 checksum value from string
 def MD5_Encode(str):
     endata = str.encode('utf-8')
     m = hashlib.md5()
     m.update(endata)
     return m.hexdigest()
+
+
 # end MD5_Encode function
 
-#this function receive a string and a checksum value
-#it generate a new checksum value for the input string
-#then checking it with the checksum to see if the transferred string is correct
+# this function receive a string and a checksum value
+# it generate a new checksum value for the input string
+# then checking it with the checksum to see if the transferred string is correct
 def Check_Payload(str, checksum):
     compute_checksum = MD5_Encode(str)
     if checksum == compute_checksum:
         return True
     else:
         return False
-# end Check_Payload function
+
 
 host = ''
 port = 50003
@@ -47,19 +50,19 @@ size = 1024
 s = None
 errorM = "Error: Invalid Question"
 try:
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # Create a socket object that use IPv4 and TCP
-    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR,1)
-    s.bind((host,port))
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Create a socket object that use IPv4 and TCP
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    s.bind((host, port))
     s.listen(backlog)
-except socket.error as message: #error handling
+except socket.error as message:  # error handling
     if s:
         s.close()
-    print ("Could not open socket: " + str(message))
+    print("Could not open socket: " + str(message))
     sys.exit(1)
 print('Server Connected')
 while 1:
-    wclient, address = s.accept()               # accept request from a client
-    pickled_data = wclient.recv(size)           # received a pickled data
+    wclient, address = s.accept()  # accept request from a client
+    pickled_data = wclient.recv(size)  # received a pickled data
     received_data = pickle.loads(pickled_data)  # unpickling data
 
     # store the question and checksum value from received tuple into variables
@@ -67,32 +70,31 @@ while 1:
     receive_checksum = received_data[1]
     print('Payload Received\nChecking MD5 Checksum')
 
-
-    if Check_Payload(question,receive_checksum):# checking if the the checksum to see if the information is correct
+    if Check_Payload(question, receive_checksum):  # checking if the the checksum to see if the information is correct
         print('Checksum Verified')
-        #connect to wolfram server
+        # connect to Wolfram server
         appid = "27TG8H-VEQ8L3WAJ5"
         client = wolframalpha.Client(appid)
         print('Question: ', question)
-        res = client.query(question)            # send the question to wolfram
+        res = client.query(question)  # send the question to wolfram
         print('Question Sent to Wolfram API')
         try:
-            answer = next(res.results).text         # receive the answer
+            answer = next(res.results).text  # receive the answer
             print('Answer:')
             print(answer)
 
-            new_checksum = MD5_Encode(answer)       # generate a checksum for the answer
-            tuple_data = (answer, new_checksum)     # pack answer and checksum into tuple
-            data_send = pickle.dumps(tuple_data)    # pickle the data
-            wclient.send(data_send)                 # send data back to the client
+            new_checksum = MD5_Encode(answer)  # generate a checksum for the answer
+            tuple_data = (answer, new_checksum)  # pack answer and checksum into tuple
+            data_send = pickle.dumps(tuple_data)  # pickle the data
+            wclient.send(data_send)  # send data back to the client
             print('Sending Answer')
-        except StopIteration:
+        except:
             print(errorM)
             new_checksum = MD5_Encode(errorM)  # generate a checksum for the answer
             tuple_data = (errorM, new_checksum)  # pack answer and checksum into tuple
             data_send = pickle.dumps(tuple_data)  # pickle the data
             wclient.send(data_send)
-    else: # if checksum not correct, send an error message to the client
+    else:  # if checksum not correct, send an error message to the client
         print('MD5 Checksum Not Verified')
         wclient.send(b'MD5 Verification Fail!')
     # close the connection with client
