@@ -1,18 +1,6 @@
-"""
-ECE4564: Network Application - Spring 2017
-Instructor:     William O. Plymale
-Assignment:     Assignment 2 - Little Brother
-Date:           02/23/2017
-File name:      pistatsview.py
-Developer:      Team 16 - Anup Jasani, John Stradling, Kenta Yoshimura, Nhan Pham
-Description:
-
-Last modify:    02/23/2017
-"""
-
-import sys
 import time
-
+import json
+import sys
 
 def get_args():
     opt_in_opt = "ERROR: cannot take another opt flag as a parameter"
@@ -86,19 +74,62 @@ def get_args():
         print("ERROR: parameters -b and -k need to be set")
         sys.exit()
 
+ip_addr, virt_host, creds, routing_key = get_args()
+last_idle = last_total = 0
+readonce = True
+print(ip_addr, virt_host, creds, routing_key)
 
-def output_data(host, arr1, arr2):
-    s = host + ":\n" + arr2[0] + ": " + str(arr2[1]) + "\n" + arr1[1] + ": " + arr1[2] + "=" + str(
-        arr1[3]) + " B/s " + ", " + arr1[4] + "=" + str(arr1[5]) + " B/s \n" + arr1[11] + ": " + arr1[12] + "=" + str(
-        arr1[13]) + " B/s " + ", " + arr1[14] + "=" + str(arr1[15]) + " B/s \n" + arr1[6] + ": " + arr1[7] + "=" + str(
-        arr1[8]) + " B/s " + ", " + arr1[9] + "=" + str(arr1[10]) + " B/s "
-    print(s)
+while 1:
+    with open('/proc/stat') as f:
+        fields = [float(column) for column in f.readline().strip().split()[1:]]
+    idle, total = fields[3], sum(fields)
+    idle_delta, total_delta = idle - last_idle, total - last_total
+    last_idle, last_total = idle, total
+    utilisation = (1.0 - idle_delta / total_delta)
+    if readonce == True:
+        net = open('/proc/net/dev')
+        netfield = net.read().split()
+        last_wlan0R = float(netfield[21])
+        last_wlan0T = float(netfield[29])
+        last_loR = float(netfield[38])
+        last_loT = float(netfield[46])
+        last_eth0R = float(netfield[55])
+        last_eth0T = float(netfield[63])
+        net.close()
+        time.sleep(1)
+        net = open('/proc/net/dev')
+        netfield = net.read().split()
+        wlan0R = float(netfield[21])
+        wlan0T = float(netfield[29])
+        loR = float(netfield[38])
+        loT = float(netfield[46])
+        eth0R = float(netfield[55])
+        eth0T = float(netfield[63])
+        net.close()
+        wlan0R_delta, wlan0T_delta = wlan0R - last_wlan0R, wlan0T - last_wlan0T
+        loR_delta, loT_delta = loR - last_loR, loT - last_loT
+        eth0R_delta, eth0T_delta = eth0R - last_eth0R, eth0T - last_eth0T
+        readonce = False
+    else:
+        time.sleep(1)
+        net = open('/proc/net/dev')
+        netfield = net.read().split()
+        wlan0R = float(netfield[21])
+        wlan0T = float(netfield[29])
+        loR = float(netfield[38])
+        loT = float(netfield[46])
+        eth0R = float(netfield[55])
+        eth0T = float(netfield[63])
+        net.close()
+        wlan0R_delta, wlan0T_delta = wlan0R - last_wlan0R, wlan0T - last_wlan0T
+        loR_delta, loT_delta = loR - last_loR, loT - last_loT
+        eth0R_delta, eth0T_delta = eth0R - last_eth0R, eth0T - last_eth0T
 
+    last_wlan0R, last_wlan0T = wlan0R, wlan0T
+    last_loR, last_loT = loR, loT
+    last_eth0R, last_eth0T = eth0R, eth0T
+    #print(utilisation, wlan0R_delta, wlan0T_delta, loR_delta, loT_delta, eth0R_delta, eth0T_delta)
+    string = json.dumps({"net": { "lo": { "rx": loR_delta, "tx": loT_delta }, "wlan0": { "rx": wlan0R, "tx": wlan0T },
+                         "etho0": { "rx": eth0R_delta, "tx": eth0T_delta } }, "cpu": utilisation } , sort_keys = False, indent = 4)
+    print(string)
 
-if __name__ == '__main__':
-    ip_addr, virt_host, creds, routing_key = get_args()
-    print('Info:\t', ip_addr, virt_host, creds, routing_key)
-    user, password = creds.split(':')
-    arr_net = ["net", "lo", "rx", 0, "tx", 0, "wlan0", "rx", 708, "tx", 1192, "eth0", "rx", 0, "tx", 0]
-    arr_cpu = ["cpu", 0.2771314211797171]
-    output_data(virt_host, arr_net, arr_cpu)
