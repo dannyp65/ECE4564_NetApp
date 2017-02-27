@@ -99,7 +99,19 @@ def output_data(host, arr1, arr2):
 
 
 if __name__ == '__main__':
-# ****RabbitMQ START
+    ip_addr, virt_host, creds, routing_key = get_args()
+    print('Info:\t', ip_addr, virt_host, creds, routing_key)
+    user, password = creds.split(':')
+    arr_net = ["net", "lo", "rx", 0, "tx", 0, "wlan0", "rx", 708, "tx", 1192, "eth0", "rx", 0, "tx", 0]
+    arr_cpu = ["cpu", 0.2771314211797171]
+    #output_data(virt_host, arr_net, arr_cpu)
+    
+    client = MongoClient()
+    db = client.test_database   #nothing actually done until first doc inserted
+    collection = db.test_collection
+
+    # ****RabbitMQ START
+    """
     connection = pika.BlockingConnection(pika.ConnectionParameters(
         host='localhost'))
     channel = connection.channel()
@@ -119,25 +131,18 @@ if __name__ == '__main__':
 
     print(" [x] Sent %r:%r" % (severity, message))
     connection.close()
-#****RabbitMQ END
-
-    ip_addr, virt_host, creds, routing_key = get_args()
-    print('Info:\t', ip_addr, virt_host, creds, routing_key)
-    user, password = creds.split(':')
-    arr_net = ["net", "lo", "rx", 0, "tx", 0, "wlan0", "rx", 708, "tx", 1192, "eth0", "rx", 0, "tx", 0]
-    arr_cpu = ["cpu", 0.2771314211797171]
-    #output_data(virt_host, arr_net, arr_cpu)
-
-    client = MongoClient()
-    db = client.test_database   #nothing actually done until first doc inserted
-    collection = db.test_collection
-
-    post = {"author": "Mike",
+    """
+    #****RabbitMQ END
+    
+    post = [{"author": "Mike",
             "text": "My first blog post!",
-            "tags":["mongodb", "python", "pymongo"]}
-    posts = db.posts
-    post_id = posts.insert_one(post).inserted_id
-    print(post_id)  #special key of post
+            "tags":["mongodb", "python", "pymongo"]},
+            {"author": "Joe",
+             "text": "This is a test",
+             "tags":["test1", "test2", "test3"]}]
+    posts = db.posts    #posts already existing in db
+    post_ids = posts.insert_many(post).inserted_ids #array of ids of recent
+    print(post_ids)  #special key of post
     print(db.collection_names(include_system_collections=False))    #lists all collections in database
-
-    pprint.pprint(posts.find_one({"_id": post_id}))
+    for p in posts.find():
+        pprint.pprint(p)
