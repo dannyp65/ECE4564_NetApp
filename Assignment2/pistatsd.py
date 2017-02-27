@@ -11,7 +11,10 @@ channel.exchange_declare(exchange='direct_logs',
 
 severity = sys.argv[1] if len(sys.argv) > 2 else 'info'
 message = ' '.join(sys.argv[2:]) or 'Hello World!'
+# your
 
+
+# use this format to send your message to rabbitMQ
 channel.basic_publish(exchange='direct_logs',
                       routing_key=severity,
                       body=message)
