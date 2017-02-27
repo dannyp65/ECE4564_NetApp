@@ -1,17 +1,7 @@
-"""
-ECE4564: Network Application - Spring 2017
-Instructor:     William O. Plymale
-Assignment:     Assignment 2 - Little Brother
-Date:           02/23/2017
-File name:      pistatsview.py
-Developer:      Team 16 - Anup Jasani, John Stradling, Kenta Yoshimura, Nhan Pham
-Description:
-
-Last modify:    02/23/2017
-"""
-
 import sys
-import time
+import pymongo
+from pymongo import MongoClient
+import pprint
 
 
 def get_args():
@@ -101,4 +91,19 @@ if __name__ == '__main__':
     user, password = creds.split(':')
     arr_net = ["net", "lo", "rx", 0, "tx", 0, "wlan0", "rx", 708, "tx", 1192, "eth0", "rx", 0, "tx", 0]
     arr_cpu = ["cpu", 0.2771314211797171]
-    output_data(virt_host, arr_net, arr_cpu)
+    #output_data(virt_host, arr_net, arr_cpu)
+
+    client = MongoClient()
+    db = client.test_database   #nothing actually done until first doc inserted
+    collection = db.test_collection
+    
+    post = {"author": "Mike",
+            "text": "My first blog post!",
+            "tags":["mongodb", "python", "pymongo"]}
+    posts = db.posts
+    post_id = posts.insert_one(post).inserted_id
+    print(post_id)  #special key of post
+    print(db.collection_names(include_system_collections=False))    #lists all collections in database
+
+    pprint.pprint(posts.find_one({"_id": post_id}))
+    
