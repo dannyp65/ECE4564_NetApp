@@ -1,7 +1,7 @@
 import time
 import json
 import sys
-
+import pika
 def get_args():
     opt_in_opt = "ERROR: cannot take another opt flag as a parameter"
     cmd_args = sys.argv
@@ -74,10 +74,22 @@ def get_args():
         print("ERROR: parameters -b and -k need to be set")
         sys.exit()
 
-ip_addr, virt_host, creds, routing_key = get_args()
+ip_addr, virt_host, creds, routing_keys = get_args()
 last_idle = last_total = 0
 readonce = True
-print(ip_addr, virt_host, creds, routing_key)
+print(ip_addr, virt_host, creds, routing_keys)
+user, password = creds.split(':')
+
+credentials = pika.PlainCredentials(user, password)
+parameters = pika.ConnectionParameters(ip_addr,
+                                       5672,
+                                       virt_host,
+                                       credentials)
+
+connection = pika.BlockingConnection(parameters)
+channel = connection.channel()
+channel.exchange_declare(exchange='team16',
+                         type='direct')
 
 while 1:
     with open('/proc/stat') as f:
@@ -129,7 +141,10 @@ while 1:
     last_loR, last_loT = loR, loT
     last_eth0R, last_eth0T = eth0R, eth0T
     #print(utilisation, wlan0R_delta, wlan0T_delta, loR_delta, loT_delta, eth0R_delta, eth0T_delta)
-    string = json.dumps({"net": { "lo": { "rx": loR_delta, "tx": loT_delta }, "wlan0": { "rx": wlan0R, "tx": wlan0T },
+    message = json.dumps({"net": { "lo": { "rx": loR_delta, "tx": loT_delta }, "wlan0": { "rx": wlan0R, "tx": wlan0T },
                          "etho0": { "rx": eth0R_delta, "tx": eth0T_delta } }, "cpu": utilisation } , sort_keys = False, indent = 4)
-    print(string)
-
+    print(message)
+    channel.basic_publish(exchange='team16',
+                          routing_key=routing_keys,
+                          body=message)
+connection.close()

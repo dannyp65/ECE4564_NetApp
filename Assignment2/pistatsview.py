@@ -97,11 +97,37 @@ def output_data(host, arr1, arr2):
         arr1[8]) + " B/s " + ", " + arr1[9] + "=" + str(arr1[10]) + " B/s "
     print(s)
 
-
 if __name__ == '__main__':
-    ip_addr, virt_host, creds, routing_key = get_args()
-    print('Info:\t', ip_addr, virt_host, creds, routing_key)
+    ip_addr, virt_host, creds, routing_keys = get_args()
+    print('Info:\t', ip_addr, virt_host, creds, routing_keys)
     user, password = creds.split(':')
+
+    credentials = pika.PlainCredentials(user, password)
+    parameters = pika.ConnectionParameters(ip_addr,
+                                           5672,
+                                           virt_host,
+                                           credentials)
+
+    connection = pika.BlockingConnection(parameters)
+    channel = connection.channel()
+    channel.exchange_declare(exchange='team16',
+                             type='direct')
+
+    result = channel.queue_declare(exclusive=True)
+    queue_name = result.method.queue
+
+    for routing_key in routing_keys:
+        channel.queue_bind(exchange='team16',
+                           queue=queue_name,
+                           routing_key=routing_key)
+    def callback(ch, method, properties, body):
+        print(" [x] %r:%r" % (method.routing_key, body))
+
+
+    channel.basic_consume(callback,
+                          queue=queue_name,
+                          no_ack=True)
+
     arr_net = ["net", "lo", "rx", 0, "tx", 0, "wlan0", "rx", 708, "tx", 1192, "eth0", "rx", 0, "tx", 0]
     arr_cpu = ["cpu", 0.2771314211797171]
     #output_data(virt_host, arr_net, arr_cpu)
@@ -110,28 +136,10 @@ if __name__ == '__main__':
     db = client.test_database   #nothing actually done until first doc inserted
     collection = db.test_collection
 
-    # ****RabbitMQ START
-    """
-    connection = pika.BlockingConnection(pika.ConnectionParameters(
-        host='localhost'))
-    channel = connection.channel()
-
-    channel.exchange_declare(exchange='direct_logs',
-                             type='direct')
-
-    severity = sys.argv[1] if len(sys.argv) > 2 else 'info'
-    message = ' '.join(sys.argv[2:]) or 'Hello World!'
-    # your
 
 
-    # use this format to send your message to rabbitMQ
-    channel.basic_publish(exchange='direct_logs',
-                          routing_key=severity,
-                          body=message)
 
-    print(" [x] Sent %r:%r" % (severity, message))
-    connection.close()
-    """
+    channel.start_consuming()
     #****RabbitMQ END
     
     post = [{"author": "Mike",
