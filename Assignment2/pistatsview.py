@@ -3,7 +3,7 @@
 ECE4564: Network Application - Spring 2017
 Instructor:     William O. Plymale
 Assignment:     Assignment 2 - Little Brother
-Date:           02/23/2017
+Date:           02/27/2017
 File name:      pistatsview.py
 Developer:      Team 16 - Anup Jasani, John Stradling, Kenta Yoshimura, Nhan Pham
 Description:
@@ -104,19 +104,19 @@ def threshold_RGB(curr_cpu):
     cpu_25 = cpu_lo + diff/4.0
     if curr_cpu <= cpu_25:
         #turn on green
-        print('LED is green')
+        print('LED is green\n')
         GPIO.output(24, GPIO.HIGH)
         GPIO.output(18,GPIO.LOW)
         GPIO.output(23,GPIO.LOW)
     elif curr_cpu > cpu_25 and curr_cpu < cpu_50:
         #turn on yellow = green + red
-        print('LED is yellow')
+        print('LED is yellow\n')
         GPIO.output(23, GPIO.HIGH)
         GPIO.output(24, GPIO.HIGH)
         GPIO.output(18,GPIO.LOW)
     elif curr_cpu >= cpu_50:
         #turn on red
-        print('LED is red')
+        print('LED is red\n')
         GPIO.output(23, GPIO.HIGH)
         GPIO.output(18,GPIO.LOW)
         GPIO.output(24,GPIO.LOW)
@@ -125,7 +125,7 @@ print("Starting Monitor RPi")
 ip_addr, virt_host, creds, routing_key = get_args()
 user, password = creds.split(':')
 
-# ****RabbitMQ START
+print("Connecting RabbitMQ")
 credentials = pika.PlainCredentials(user, password)
 parameters = pika.ConnectionParameters(ip_addr, 5672, virt_host, credentials)
 
@@ -140,12 +140,15 @@ queue_name = result.method.queue
 channel.queue_bind(exchange='pi_utilization',
                         queue=queue_name,
                         routing_key=routing_key)
+
+print("Creating Mongo client, database, and collection")
 client = MongoClient()
 db = client.database_1  #nothing actually done until first doc inserted
 collection = db.collection_1
+print("Clearing previous database")
 db.collection_1.drop()
 
-#setup all GPIO ports
+print("Setting up GPIO pins for the LED")
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 GPIO.setup(18,GPIO.OUT)
@@ -185,8 +188,10 @@ def callback(ch, method, properties, body):
              post['net']['wlan0']['rx'], wlan_rx_hi, wlan_rx_lo, post['net']['wlan0']['tx'], wlan_tx_hi, wlan_tx_lo))
     threshold_RGB(post['cpu'])
 
+print("Subscribing to the exchange of", routing_key)
 channel.basic_consume(callback,
                         queue=queue_name,
                         no_ack=True)
+print("Consuming queue messages")
 channel.start_consuming()
 #****RabbitMQ END
