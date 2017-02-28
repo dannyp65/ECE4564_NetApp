@@ -1,6 +1,8 @@
+#!/usr/bin/env python3
 import time
 import json
 import sys
+import pika
 
 def get_args():
     opt_in_opt = "ERROR: cannot take another opt flag as a parameter"
@@ -74,19 +76,34 @@ def get_args():
         print("ERROR: parameters -b and -k need to be set")
         sys.exit()
 
-ip_addr, virt_host, creds, routing_key = get_args()
+ip_addr, virt_host, creds, routing_keys = get_args()
 last_idle = last_total = 0
 readonce = True
-print(ip_addr, virt_host, creds, routing_key)
+print("Info: ", ip_addr, virt_host, creds, routing_keys)
+user, password = creds.split(':')
+
+credentials = pika.PlainCredentials(user, password)
+parameters = pika.ConnectionParameters(ip_addr,
+                                       5672,
+                                       virt_host,
+                                       credentials)
+
+connection = pika.BlockingConnection(parameters)
+channel = connection.channel()
+channel.exchange_declare(exchange='pi_utilization',
+                         type='direct')
 
 while 1:
+    print ("Calculating CPU Utilization")
     with open('/proc/stat') as f:
         fields = [float(column) for column in f.readline().strip().split()[1:]]
     idle, total = fields[3], sum(fields)
     idle_delta, total_delta = idle - last_idle, total - last_total
     last_idle, last_total = idle, total
     utilisation = (1.0 - idle_delta / total_delta)
+    print ("Finished Calculating CPU Utilization")
     if readonce == True:
+        print ("Calculating Network Throughput")
         net = open('/proc/net/dev')
         netfield = net.read().split()
         last_wlan0R = float(netfield[21])
@@ -111,6 +128,7 @@ while 1:
         eth0R_delta, eth0T_delta = eth0R - last_eth0R, eth0T - last_eth0T
         readonce = False
     else:
+        print ("Calculating Network Throughput")
         time.sleep(1)
         net = open('/proc/net/dev')
         netfield = net.read().split()
@@ -128,8 +146,15 @@ while 1:
     last_wlan0R, last_wlan0T = wlan0R, wlan0T
     last_loR, last_loT = loR, loT
     last_eth0R, last_eth0T = eth0R, eth0T
-    #print(utilisation, wlan0R_delta, wlan0T_delta, loR_delta, loT_delta, eth0R_delta, eth0T_delta)
-    string = json.dumps({"net": { "lo": { "rx": loR_delta, "tx": loT_delta }, "wlan0": { "rx": wlan0R, "tx": wlan0T },
-                         "etho0": { "rx": eth0R_delta, "tx": eth0T_delta } }, "cpu": utilisation } , sort_keys = False, indent = 4)
-    print(string)
-
+    print ("Finished Calculating Network Throughput")
+    print ("Creating JSON Object")
+    message = json.dumps({"net": { "lo": { "rx": loR_delta, "tx": loT_delta }, "wlan0": { "rx": wlan0R, "tx": wlan0T },
+                         "eth0": { "rx": eth0R_delta, "tx": eth0T_delta } }, "cpu": utilisation } , sort_keys = False, indent = 4)
+    #print("JSON Object = ", message)
+    print("Sending JSON Object to Message Broker")
+    channel.basic_publish(exchange='pi_utilization',
+                          routing_key=routing_keys,
+                          body=message)
+    print("Finished Sending to Message Broker")
+    print("..................................................................")
+connection.close()

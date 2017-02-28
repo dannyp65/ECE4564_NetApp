@@ -153,7 +153,7 @@ GPIO.setwarnings(False)
 GPIO.setup(18,GPIO.OUT)
 GPIO.setup(23,GPIO.OUT)
 GPIO.setup(24,GPIO.OUT)
-    
+
 cpu_hi = 0
 lo_rx_hi = lo_tx_hi = eth_rx_hi = eth_tx_hi = wlan_rx_hi = wlan_tx_hi = 0.0
 cpu_lo = 1
@@ -171,7 +171,7 @@ def callback(ch, method, properties, body):
         if post['net']['lo']['rx'] < lo_rx_lo: lo_rx_lo = post['net']['lo']['rx']
         if post['net']['lo']['tx'] > lo_tx_hi: lo_tx_hi = post['net']['lo']['tx']
         if post['net']['lo']['tx'] < lo_tx_lo: lo_tx_lo = post['net']['lo']['tx']
-        
+
         if post['net']['eth0']['rx'] > eth_rx_hi: eth_rx_hi = post['net']['eth0']['rx']
         if post['net']['eth0']['rx'] < eth_rx_lo: eth_rx_lo = post['net']['eth0']['rx']
         if post['net']['eth0']['tx'] > eth_tx_hi: eth_tx_hi = post['net']['eth0']['tx']

@@ -1,4 +1,34 @@
-Assigment 2 - Little Brother
+Assigment 1 - Tweet Inquirer
 Team 16 - Team JANK
 
 Interperter: Python 3.6 and above
+
+Initialize process:
+  In order to capture a question from twitter, users have to use the correct tweet format and the current IP address of the Server Rpi.
+  Please follow steps below:
+    Tweet Question Format: @team16_RPI #server_host_addr:port_"question"
+    
+     Note: '#server_host_addr'is the Server Rpi's IP address (See Server Raspberry Pi below to know how to get IP address)
+           ':port' - change it to 50003
+           Example: @team16_RPI #192.168.1.32:50003_"What is a Hokie?"
+  RabbitMQ Message Broker Raspberry Pi:
+    1. Install RabbitMQ 
+    2. 
+  Server Raspberry Pi:
+    1. Open command prompt and type 'hostname -I' to obtain the Server's IP address for your tweet format
+    2. Make sure that all the extra libraries were installed on your Rapsberry Pi (see Extra Libraries)
+    3. Run server.py using python 3 (Ex: python3 server.py)
+  Client Raspberry Pi:
+    1. Make sure that all the extra libraries were installed on your Rapsberry Pi (see Extra Libraries)
+    2. Run client.py using python 3 (Ex: python3 client.py)
+    
+  Twitter: Use any twitter account to tweet questions with format above (and the correct servers ip address)
+    the answer will be tweeted back with user's twitter account tagged in it.
+    
+Extra Libraries:
+  - json
+  - pika
+  - time
+  - sys
+  - pymongo
+  - MongoClient
