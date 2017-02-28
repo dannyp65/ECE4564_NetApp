@@ -26,7 +26,7 @@ def get_args():
     cmd_args = sys.argv
     cmd_len = len(cmd_args)
     b_check, p_check, c_check, k_check = False, False, False, False
-    p_opt, c_opt, b_opt, k_opt = '/', 'guest:password', '', ''
+    p_opt, c_opt, b_opt, k_opt = '/', 'rabbit:jank', '', ''
     for i in range(1, cmd_len):
         if cmd_args[i] == b_opt or cmd_args[i] == p_opt or cmd_args[i] == c_opt or cmd_args[i] == k_opt:
             continue
@@ -125,21 +125,26 @@ print("Starting Monitor RPi")
 ip_addr, virt_host, creds, routing_key = get_args()
 user, password = creds.split(':')
 
-print("Connecting RabbitMQ")
-credentials = pika.PlainCredentials(user, password)
-parameters = pika.ConnectionParameters(ip_addr, 5672, virt_host, credentials)
+try:
+    print("Trying to connect to Message Broker")
+    credentials = pika.PlainCredentials(user, password)
+    parameters = pika.ConnectionParameters(ip_addr, 5672, virt_host, credentials)
 
-connection = pika.BlockingConnection(parameters)
-channel = connection.channel()
-channel.exchange_declare(exchange='pi_utilization',
-                             type='direct')
+    connection = pika.BlockingConnection(parameters)
+    channel = connection.channel()
+    channel.exchange_declare(exchange='pi_utilization',
+                                 type='direct')
 
-result = channel.queue_declare(exclusive=True)
-queue_name = result.method.queue
+    result = channel.queue_declare(exclusive=True)
+    queue_name = result.method.queue
 
-channel.queue_bind(exchange='pi_utilization',
-                        queue=queue_name,
-                        routing_key=routing_key)
+    channel.queue_bind(exchange='pi_utilization',
+                            queue=queue_name,
+                            routing_key=routing_key)
+except:
+    print("Connection error!")
+    raise SystemExit
+print("Connected to Message Broker and message queue", routing_key)
 
 print("Creating Mongo client, database, and collection")
 client = MongoClient()
@@ -164,7 +169,11 @@ def callback(ch, method, properties, body):
     global cpu_hi, lo_rx_hi, lo_tx_hi, eth_rx_hi, eth_tx_hi, wlan_rx_hi, wlan_tx_hi
     global cpu_lo, lo_rx_lo, lo_tx_lo, eth_rx_lo, eth_tx_lo, wlan_rx_lo, wlan_tx_lo
     post = json.loads(body.decode('utf-8'))
-    db.collection_1.insert_one(post)    #inserts new JSON and returns it's ID
+    try:
+        db.collection_1.insert_one(post)    #inserts new JSON and returns it's ID
+    except:
+        print("Couldn't insert file into database's collection")
+        raise SystemExit
     for p in db.collection_1.find():
         if p['cpu'] > cpu_hi: cpu_hi = p['cpu']
         if p['cpu'] < cpu_lo: cpu_lo = p['cpu']
