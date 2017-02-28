@@ -102,30 +102,28 @@ def threshold_RGB(curr_cpu):
     diff = cpu_hi - cpu_lo
     cpu_50 = cpu_lo + diff/2.0
     cpu_25 = cpu_lo + diff/4.0
-    print('50%:', cpu_50)
-    print('25%:', cpu_25)
     if curr_cpu <= cpu_25:
         #turn on green
-        print('green')
+        print('LED is green')
         GPIO.output(24, GPIO.HIGH)
         GPIO.output(18,GPIO.LOW)
         GPIO.output(23,GPIO.LOW)
     elif curr_cpu > cpu_25 and curr_cpu < cpu_50:
         #turn on yellow = green + red
-        print('yellow')
+        print('LED is yellow')
         GPIO.output(23, GPIO.HIGH)
         GPIO.output(24, GPIO.HIGH)
         GPIO.output(18,GPIO.LOW)
     elif curr_cpu >= cpu_50:
         #turn on red
-        print('red')
+        print('LED is red')
         GPIO.output(23, GPIO.HIGH)
         GPIO.output(18,GPIO.LOW)
         GPIO.output(24,GPIO.LOW)
 
+print("Starting Monitor RPi")
 ip_addr, virt_host, creds, routing_key = get_args()
 user, password = creds.split(':')
-print('Info:\t', ip_addr, virt_host, creds, user, password, routing_key)
 
 # ****RabbitMQ START
 credentials = pika.PlainCredentials(user, password)
