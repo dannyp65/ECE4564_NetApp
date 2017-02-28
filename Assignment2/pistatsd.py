@@ -3,12 +3,12 @@
 ECE4564: Network Application - Spring 2017
 Instructor:     William O. Plymale
 Assignment:     Assignment 2 - Little Brother
-Date:           02/27/2017
+Date:           02/23/2017
 File name:      pistatsd.py
 Developer:      Team 16 - Anup Jasani, John Stradling, Kenta Yoshimura, Nhan Pham
 Description:
 
-Last modify:    02/23/2017
+Last modify:    02/27/2017
 """
 
 import time
