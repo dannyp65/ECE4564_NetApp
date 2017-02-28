@@ -91,20 +91,27 @@ def get_args():
 ip_addr, virt_host, creds, routing_keys = get_args()
 last_idle = last_total = 0
 readonce = True
-print("Info: ", ip_addr, virt_host, creds, routing_keys)
 user, password = creds.split(':')
 
-credentials = pika.PlainCredentials(user, password)
-parameters = pika.ConnectionParameters(ip_addr,
-                                       5672,
-                                       virt_host,
-                                       credentials)
+print("Trying to Connect to Message Broker")
+try:
+    credentials = pika.PlainCredentials(user, password)
+    parameters = pika.ConnectionParameters(ip_addr,
+                                           5672,
+                                           virt_host,
+                                           credentials)
 
-connection = pika.BlockingConnection(parameters)
-channel = connection.channel()
-channel.exchange_declare(exchange='pi_utilization',
-                         type='direct')
+    connection = pika.BlockingConnection(parameters)
+    channel = connection.channel()
+    channel.exchange_declare(exchange='pi_utilization',
+                             type='direct')
+except:
+    print("Connection Error!")
+    sys.exit()
+
+print("Connected to Message Broker")    
 print("Starting", routing_keys)
+print("..................................................................")
 while 1:
     print("Calculating CPU Utilization")
     with open('/proc/stat') as f:
