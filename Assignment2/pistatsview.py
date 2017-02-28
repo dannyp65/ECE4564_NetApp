@@ -20,12 +20,11 @@ import RPi.GPIO as GPIO
 import time
 import json
 
-
+# gets the command line parameters and saves them to vars to use for connecting to the Message Broker
 def get_args():
     opt_in_opt = "ERROR: cannot take another opt flag as a parameter"
     cmd_args = sys.argv
     cmd_len = len(cmd_args)
-    b_check, p_check, c_check, k_check = False, False, False, False
     p_opt, c_opt, b_opt, k_opt = '/', 'rabbit:jank', '', ''
     for i in range(1, cmd_len):
         if cmd_args[i] == b_opt or cmd_args[i] == p_opt or cmd_args[i] == c_opt or cmd_args[i] == k_opt:
@@ -41,7 +40,6 @@ def get_args():
             except:
                 print("ERROR: no IP address given")
                 raise SystemExit
-            b_check = True
         elif cmd_args[i] == '-p':
             try:
                 p_opt = cmd_args[i + 1]
@@ -53,7 +51,6 @@ def get_args():
             except:
                 print("ERROR: no virtual host given")
                 raise SystemExit
-            p_check = True
         elif cmd_args[i] == '-c':
             try:
                 c_opt = cmd_args[i + 1]
@@ -68,7 +65,6 @@ def get_args():
             if ':' not in c_opt:
                 print("ERROR: login credential format is incorrect")
                 raise SystemExit
-            c_check = True
         elif cmd_args[i] == '-k':
             try:
                 k_opt = cmd_args[i + 1]
@@ -80,24 +76,26 @@ def get_args():
             except:
                 print("ERROR: no routing key given")
                 raise SystemExit
-            k_check = True
         elif cmd_args[i].startswith('-'):
             print("ERROR: incorrect opt flag")
             sys.exit()
         else:
             print("ERROR: ELSE", cmd_args[i])
             sys.exit()
+    # requires command to have -b and -k
     if b_opt != '' and k_opt != '':
         return b_opt, p_opt, c_opt, k_opt
     else:
         print("ERROR: parameters -b and -k need to be set")
         sys.exit()
 
+# calculates the thresholds and enables the GPIO pins to light up LED
 def threshold_RGB(curr_cpu):
     #turn off all LEDs
     GPIO.output(24,GPIO.LOW)
     GPIO.output(18,GPIO.LOW)
     GPIO.output(23,GPIO.LOW)
+    #calculate 50% and 25%
     global cpu_hi, cpu_lo
     diff = cpu_hi - cpu_lo
     cpu_50 = cpu_lo + diff/2.0
@@ -124,7 +122,7 @@ def threshold_RGB(curr_cpu):
 print("Starting Monitor RPi")
 ip_addr, virt_host, creds, routing_key = get_args()
 user, password = creds.split(':')
-
+# connecting to Message Broker
 try:
     print("Trying to connect to Message Broker")
     credentials = pika.PlainCredentials(user, password)
@@ -145,26 +143,26 @@ except:
     print("Connection error!")
     raise SystemExit
 print("Connected to Message Broker and message queue", routing_key)
-
+# creating Mongo database, collection, and client
 print("Creating Mongo client, database, and collection")
 client = MongoClient()
 db = client.database_1  #nothing actually done until first doc inserted
 collection = db.collection_1
 print("Clearing previous database")
 db.collection_1.drop()
-
+# enabling correct pins for LED
 print("Setting up GPIO pins for the LED")
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 GPIO.setup(18,GPIO.OUT)
 GPIO.setup(23,GPIO.OUT)
 GPIO.setup(24,GPIO.OUT)
-
+# setting up initial hi/lo values for calculations
 cpu_hi = 0
 lo_rx_hi = lo_tx_hi = eth_rx_hi = eth_tx_hi = wlan_rx_hi = wlan_tx_hi = 0.0
 cpu_lo = 1
 lo_rx_lo = lo_tx_lo = eth_rx_lo = eth_tx_lo = wlan_rx_lo = wlan_tx_lo = 50000000000000000000000.0
-
+# called each time when new message is received
 def callback(ch, method, properties, body):
     global cpu_hi, lo_rx_hi, lo_tx_hi, eth_rx_hi, eth_tx_hi, wlan_rx_hi, wlan_tx_hi
     global cpu_lo, lo_rx_lo, lo_tx_lo, eth_rx_lo, eth_tx_lo, wlan_rx_lo, wlan_tx_lo
@@ -203,4 +201,3 @@ channel.basic_consume(callback,
                         no_ack=True)
 print("Consuming queue messages")
 channel.start_consuming()
-#****RabbitMQ END
