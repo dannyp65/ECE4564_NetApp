@@ -20,12 +20,12 @@ Initialize process:
       virtual host: rabbit_hole 
       login: rabbit
       password: jank
-      rounting key: host1 or host2
+      rounting key: Host_1 or Host_2
       example: if the message broker ip address is 192.23.32.2 example command line will be follow:
-      python3 pistatsd –b 192.23.32.2 -p rabbit_hole –c rabbit:jank –k host1
+      python3 pistatsd –b 192.23.32.2 -p rabbit_hole –c rabbit:jank –k Host_1
    
   Monitor Raspberry Pi:
-  1. install all extra libraries on Pi.
+  1.  install all extra libraries on Pi.
   2.  using this command to run the monitor RPi:
       python3 pistatsview –b message broker [–p virtual host] [–c login:password] –k routing key
       
@@ -33,9 +33,9 @@ Initialize process:
       virtual host: rabbit_hole 
       login: rabbit
       password: jank
-      rounting key: host1 or host2
+      rounting key: Host_1 or Host_2
       example: if the message broker ip address is 192.23.32.2 example command line will be follow:
-      python3 pistatsview –b 192.23.32.2 -p rabbit_hole –c rabbit:jank –k host1
+      python3 pistatsview –b 192.23.32.2 -p rabbit_hole –c rabbit:jank –k Host_1
     
 Extra Libraries:
   - json
