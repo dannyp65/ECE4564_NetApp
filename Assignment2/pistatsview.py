@@ -1,3 +1,4 @@
+#/usr/bin/env python3
 """
 ECE4564: Network Application - Spring 2017
 Instructor:     William O. Plymale
@@ -15,6 +16,9 @@ import sys
 import pymongo
 from pymongo import MongoClient
 import pprint
+import RPi.GPIO as GPIO
+import time
+import json
 
 
 def get_args():
@@ -89,60 +93,102 @@ def get_args():
         print("ERROR: parameters -b and -k need to be set")
         sys.exit()
 
+def threshold_RGB(curr_cpu):
+    #turn off all LEDs
+    GPIO.output(24,GPIO.LOW)
+    GPIO.output(18,GPIO.LOW)
+    GPIO.output(23,GPIO.LOW)
+    global cpu_hi, cpu_lo
+    diff = cpu_hi - cpu_lo
+    cpu_50 = cpu_lo + diff/2.0
+    cpu_25 = cpu_lo + diff/4.0
+    print('50%:', cpu_50)
+    print('25%:', cpu_25)
+    if curr_cpu <= cpu_25:
+        #turn on green
+        print('green')
+        GPIO.output(24, GPIO.HIGH)
+        GPIO.output(18,GPIO.LOW)
+        GPIO.output(23,GPIO.LOW)
+    elif curr_cpu > cpu_25 and curr_cpu < cpu_50:
+        #turn on yellow = green + red
+        print('yellow')
+        GPIO.output(23, GPIO.HIGH)
+        GPIO.output(24, GPIO.HIGH)
+        GPIO.output(18,GPIO.LOW)
+    elif curr_cpu >= cpu_50:
+        #turn on red
+        print('red')
+        GPIO.output(23, GPIO.HIGH)
+        GPIO.output(18,GPIO.LOW)
+        GPIO.output(24,GPIO.LOW)
 
-def output_data(host, arr1, arr2):
-    s = host + ":\n" + arr2[0] + ": " + str(arr2[1]) + "\n" + arr1[1] + ": " + arr1[2] + "=" + str(
-        arr1[3]) + " B/s " + ", " + arr1[4] + "=" + str(arr1[5]) + " B/s \n" + arr1[11] + ": " + arr1[12] + "=" + str(
-        arr1[13]) + " B/s " + ", " + arr1[14] + "=" + str(arr1[15]) + " B/s \n" + arr1[6] + ": " + arr1[7] + "=" + str(
-        arr1[8]) + " B/s " + ", " + arr1[9] + "=" + str(arr1[10]) + " B/s "
-    print(s)
+ip_addr, virt_host, creds, routing_key = get_args()
+user, password = creds.split(':')
+print('Info:\t', ip_addr, virt_host, creds, user, password, routing_key)
 
+# ****RabbitMQ START
+credentials = pika.PlainCredentials(user, password)
+parameters = pika.ConnectionParameters(ip_addr, 5672, virt_host, credentials)
 
-if __name__ == '__main__':
-    ip_addr, virt_host, creds, routing_key = get_args()
-    print('Info:\t', ip_addr, virt_host, creds, routing_key)
-    user, password = creds.split(':')
-    arr_net = ["net", "lo", "rx", 0, "tx", 0, "wlan0", "rx", 708, "tx", 1192, "eth0", "rx", 0, "tx", 0]
-    arr_cpu = ["cpu", 0.2771314211797171]
-    #output_data(virt_host, arr_net, arr_cpu)
-    
-    client = MongoClient()
-    db = client.test_database   #nothing actually done until first doc inserted
-    collection = db.test_collection
-
-    # ****RabbitMQ START
-    """
-    connection = pika.BlockingConnection(pika.ConnectionParameters(
-        host='localhost'))
-    channel = connection.channel()
-
-    channel.exchange_declare(exchange='direct_logs',
+connection = pika.BlockingConnection(parameters)
+channel = connection.channel()
+channel.exchange_declare(exchange='pi_utilization',
                              type='direct')
 
-    severity = sys.argv[1] if len(sys.argv) > 2 else 'info'
-    message = ' '.join(sys.argv[2:]) or 'Hello World!'
-    # your
+result = channel.queue_declare(exclusive=True)
+queue_name = result.method.queue
 
+channel.queue_bind(exchange='pi_utilization',
+                        queue=queue_name,
+                        routing_key=routing_key)
+client = MongoClient()
+db = client.database_1  #nothing actually done until first doc inserted
+collection = db.collection_1
+db.collection_1.drop()
 
-    # use this format to send your message to rabbitMQ
-    channel.basic_publish(exchange='direct_logs',
-                          routing_key=severity,
-                          body=message)
-
-    print(" [x] Sent %r:%r" % (severity, message))
-    connection.close()
-    """
-    #****RabbitMQ END
+#setup all GPIO ports
+GPIO.setmode(GPIO.BCM)
+GPIO.setwarnings(False)
+GPIO.setup(18,GPIO.OUT)
+GPIO.setup(23,GPIO.OUT)
+GPIO.setup(24,GPIO.OUT)
     
-    post = [{"author": "Mike",
-            "text": "My first blog post!",
-            "tags":["mongodb", "python", "pymongo"]},
-            {"author": "Joe",
-             "text": "This is a test",
-             "tags":["test1", "test2", "test3"]}]
-    posts = db.posts    #posts already existing in db
-    post_ids = posts.insert_many(post).inserted_ids #array of ids of recent
-    print(post_ids)  #special key of post
-    print(db.collection_names(include_system_collections=False))    #lists all collections in database
-    for p in posts.find():
-        pprint.pprint(p)
+cpu_hi = 0
+lo_rx_hi = lo_tx_hi = eth_rx_hi = eth_tx_hi = wlan_rx_hi = wlan_tx_hi = 0.0
+cpu_lo = 1
+lo_rx_lo = lo_tx_lo = eth_rx_lo = eth_tx_lo = wlan_rx_lo = wlan_tx_lo = 50000000000000000000000.0
+
+def callback(ch, method, properties, body):
+    global cpu_hi, lo_rx_hi, lo_tx_hi, eth_rx_hi, eth_tx_hi, wlan_rx_hi, wlan_tx_hi
+    global cpu_lo, lo_rx_lo, lo_tx_lo, eth_rx_lo, eth_tx_lo, wlan_rx_lo, wlan_tx_lo
+    post = json.loads(body.decode('utf-8'))
+    db.collection_1.insert_one(post)    #inserts new JSON and returns it's ID
+    for p in db.collection_1.find():
+        if p['cpu'] > cpu_hi: cpu_hi = p['cpu']
+        if p['cpu'] < cpu_lo: cpu_lo = p['cpu']
+        if post['net']['lo']['rx'] > lo_rx_hi: lo_rx_hi = post['net']['lo']['rx']
+        if post['net']['lo']['rx'] < lo_rx_lo: lo_rx_lo = post['net']['lo']['rx']
+        if post['net']['lo']['tx'] > lo_tx_hi: lo_tx_hi = post['net']['lo']['tx']
+        if post['net']['lo']['tx'] < lo_tx_lo: lo_tx_lo = post['net']['lo']['tx']
+        
+        if post['net']['eth0']['rx'] > eth_rx_hi: eth_rx_hi = post['net']['eth0']['rx']
+        if post['net']['eth0']['rx'] < eth_rx_lo: eth_rx_lo = post['net']['eth0']['rx']
+        if post['net']['eth0']['tx'] > eth_tx_hi: eth_tx_hi = post['net']['eth0']['tx']
+        if post['net']['eth0']['tx'] < eth_tx_lo: eth_tx_lo = post['net']['eth0']['tx']
+
+        if post['net']['wlan0']['rx'] > wlan_rx_hi: wlan_rx_hi = post['net']['wlan0']['rx']
+        if post['net']['wlan0']['rx'] < wlan_rx_lo: wlan_rx_lo = post['net']['wlan0']['rx']
+        if post['net']['wlan0']['tx'] > wlan_tx_hi: wlan_tx_hi = post['net']['wlan0']['tx']
+        if post['net']['wlan0']['tx'] < wlan_tx_lo: wlan_tx_lo = post['net']['wlan0']['tx']
+    print("%s:\ncpu: %s [Hi: %s, Lo: %s]\nlo: rx=%s B/s [Hi: %s, Lo:%s], tx=%s B/s [Hi: %s, Lo:%s]\neth0: rx=%s B/s [Hi: %s, Lo:%s], tx=%s B/s [Hi: %s, Lo:%s]\nwlan0: rx=%s B/s [Hi: %s, Lo:%s], tx=%s B/s [Hi: %s, Lo:%s]\n"
+          % (method.routing_key, post['cpu'], cpu_hi, cpu_lo, post['net']['lo']['rx'], lo_rx_hi, lo_rx_lo, post['net']['lo']['tx'], lo_tx_hi, lo_tx_lo,
+             post['net']['eth0']['rx'], eth_rx_hi, eth_rx_lo, post['net']['eth0']['tx'], eth_tx_hi, eth_tx_lo,
+             post['net']['wlan0']['rx'], wlan_rx_hi, wlan_rx_lo, post['net']['wlan0']['tx'], wlan_tx_hi, wlan_tx_lo))
+    threshold_RGB(post['cpu'])
+
+channel.basic_consume(callback,
+                        queue=queue_name,
+                        no_ack=True)
+channel.start_consuming()
+#****RabbitMQ END
