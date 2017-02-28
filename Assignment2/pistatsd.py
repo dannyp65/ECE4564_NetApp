@@ -21,7 +21,7 @@ def get_args():
     cmd_args = sys.argv
     cmd_len = len(cmd_args)
     b_check, p_check, c_check, k_check = False, False, False, False
-    p_opt, c_opt, b_opt, k_opt = '/', 'guest:password', '', ''
+    p_opt, c_opt, b_opt, k_opt = '/', 'rabbit:jank', '', ''
     for i in range(1, cmd_len):
         if cmd_args[i] == b_opt or cmd_args[i] == p_opt or cmd_args[i] == c_opt or cmd_args[i] == k_opt:
             continue
