@@ -16,6 +16,7 @@ import json
 import sys
 import pika
 
+# Function for command line arguments
 def get_args():
     opt_in_opt = "ERROR: cannot take another opt flag as a parameter"
     cmd_args = sys.argv
@@ -94,6 +95,8 @@ readonce = True
 user, password = creds.split(':')
 
 print("Trying to Connect to Message Broker")
+# When trying to connect to the Message Broker if any type of error is
+# found it would exit out and print out "Connection Error!"
 try:
     credentials = pika.PlainCredentials(user, password)
     parameters = pika.ConnectionParameters(ip_addr,
@@ -114,6 +117,8 @@ print("Starting", routing_keys)
 print("..................................................................")
 while 1:
     print("Calculating CPU Utilization")
+    # The CPU Utilization code was given in https://rosettacode.org/wiki/Linux_CPU_utilization.
+    # All that needed to be changed was the time interval which should be every 1 second
     with open('/proc/stat') as f:
         fields = [float(column) for column in f.readline().strip().split()[1:]]
     idle, total = fields[3], sum(fields)
@@ -121,6 +126,8 @@ while 1:
     last_idle, last_total = idle, total
     utilisation = (1.0 - idle_delta / total_delta)
     print("Finished Calculating CPU Utilization")
+    # Runs through this section once to get previous data and a current data for the change in bytes received and
+    # transmitted
     if readonce == True:
         print("Calculating Network Throughput")
         net = open('/proc/net/dev')
@@ -146,6 +153,7 @@ while 1:
         loR_delta, loT_delta = loR - last_loR, loT - last_loT
         eth0R_delta, eth0T_delta = eth0R - last_eth0R, eth0T - last_eth0T
         readonce = False
+    # This section has the Network Throughput calculation after going through the initial run
     else:
         print("Calculating Network Throughput")
         time.sleep(1)
@@ -167,9 +175,11 @@ while 1:
     last_eth0R, last_eth0T = eth0R, eth0T
     print("Finished Calculating Network Throughput")
     print("Creating JSON Object")
+    # Creates a single JSON Object with all of the required data
     message = json.dumps({"net": { "lo": { "rx": loR_delta, "tx": loT_delta }, "wlan0": { "rx": wlan0R, "tx": wlan0T },
                          "eth0": { "rx": eth0R_delta, "tx": eth0T_delta } }, "cpu": utilisation } , sort_keys = False, indent = 4)
     print("Sending JSON Object to Message Broker")
+    # Sends the created JSON Object to Message Broker
     channel.basic_publish(exchange='pi_utilization',
                           routing_key=routing_keys,
                           body=message)
