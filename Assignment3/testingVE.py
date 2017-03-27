@@ -43,7 +43,7 @@ def get_next_pass(lat, lon, alt, name, tle0, tle1):
             if sat.eclipsed is False and -18 < sun_alt < -6:
                 print ("%s %4.1f %5.1f" % (tr, math.degrees(sat.alt), math.degrees(sat.az)))
             tr = ephem.Date(tr + 60.0 * ephem.second)  
-
+            
         
         observer.date = tr + ephem.minute
 
