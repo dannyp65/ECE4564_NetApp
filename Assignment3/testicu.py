@@ -5,6 +5,7 @@ from spacetrack import SpaceTrackClient
 st = SpaceTrackClient('jstrad@vt.edu', 'johnnyboy1234567')
 import zipcode
 from geopy.geocoders import Nominatim
+#from orbit import satellite
 
 myzip = zipcode.isequal('24061')
 geolocator = Nominatim()
