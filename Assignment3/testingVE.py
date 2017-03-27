@@ -26,31 +26,26 @@ def get_next_pass(lat, lon, alt, name, tle0, tle1):
     observer.elevation = alt
     observer.pressure = 0
     observer.horizon = '-0:34'
-
+    """
     now = datetime.datetime.utcnow()
     observer.date = now
+    """
+    for p in range(15):
+        tr, azr, tt, altt, ts, azs = observer.next_pass(sat)
 
-    tr, azr, tt, altt, ts, azs = observer.next_pass(sat)
+        while tr < ts:
+            observer.date = tr
+            sun = ephem.Sun()
+            sun.compute(observer)
+            sat.compute(observer)
+            sun_alt = math.degrees(sun.alt)
+            #print (sun_alt)
+            if sat.eclipsed is False and -18 < sun_alt < -6:
+                print ("%s %4.1f %5.1f" % (tr, math.degrees(sat.alt), math.degrees(sat.az)))
+            tr = ephem.Date(tr + 60.0 * ephem.second)  
 
-    duration = int((ts - tr) *60*60*24)
-    rise_time = datetime_from_time(tr)
-    max_time = datetime_from_time(tt)
-    set_time = datetime_from_time(ts)
-
-    observer.date = max_time
-
-    sun = ephem.Sun()
-    sun.compute(observer)
-    sat.compute(observer)
-
-    sun_alt = math.degrees(sun.alt)
-
-    visible = False
-    if sat.eclipsed is False and -18 < degrees(sun_alt) < -6 :
-        visible = True
-
-    return visible
-           
+        
+        observer.date = tr + ephem.minute
 
 #---------------------------------------------------------------------
 
@@ -77,11 +72,8 @@ print ("---------------------------------")
 
 name = "ISS (ZARYA)"
 
-iss = ephem.readtle(name, tle0, tle1)
+#iss = ephem.readtle(name, tle0, tle1)
 
-obs = ephem.Observer()
-obs.lat = location.latitude
-obs.long = location.longitude
 """
 for p in range(3):
     tr, azr, tt, altt, ts, azs = obs.next_pass(iss)
@@ -94,12 +86,20 @@ for p in range(3):
     obs.date = tr + ephem.minute
 """
 #--------------------------------------------------------------------------
-alt = 2077
+alt = 0
+#print (get_next_pass(location.latitude, location.longitude, alt, name, tle0, tle1))
+
 i = 0
-while i < 5:
-    if get_next_pass(location.latitude, location.longitude, alt, name, tle0, tle1):
-        print (get_next_pass(location.latitude, location.longitude, alt, name, tle0, tle1))
-        i = i + 1
+while 1:
+    get_next_pass(location.latitude, location.longitude, alt, name, tle0, tle1)
+    print ("Satellite Information:")
+    tleInfo = st.tle_latest(norad_cat_id=[25544], ordinal=1, format='tle')
+    print (tleInfo)
+    tle = ''.join(tleInfo)
+    tle0, tle1 = tle.splitlines()
+    
+
+
 
 
 
