@@ -1,6 +1,6 @@
 import requests
 import json
-from twilio.rest import Client
+from twilio.rest import TwilioRestClient
 import datetime
 import pygame
 
@@ -16,7 +16,7 @@ def sendMess(mess, num):
     tonum = '+1' + num
     twilio_sid = "AC3fc819a1fe2f836b25e54e0ef47ba23d"
     twilio_token = "52a06091ff97cdc10f3af0f6790c9daf"
-    client = Client(twilio_sid, twilio_token)
+    client = TwilioRestClient(twilio_sid, twilio_token)
     message = client.messages.create(to=tonum, from_="+18045523194",
                                      body=mess)
     print(message)
