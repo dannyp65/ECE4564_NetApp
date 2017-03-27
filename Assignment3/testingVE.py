@@ -49,18 +49,8 @@ def get_next_pass(lat, lon, alt, name, tle0, tle1):
     if sat.eclipsed is False and -18 < degrees(sun_alt) < -6 :
         visible = True
 
-    return {
-             "rise_time": calendar.timegm(rise_time.timetuple()),
-             "rise_azimuth": math.degrees(azr),
-             "max_time": calendar.timegm(max_time.timetuple()),
-             "max_alt": math.degrees(altt),
-             "set_time": calendar.timegm(set_time.timetuple()),
-             "set_azimuth": math.degrees(azs),
-             "elevation": sat.elevation,
-             "sun_alt": sun_alt,
-             "duration": duration,
-             "visible": visible
-           }
+    return visible
+           
 
 #---------------------------------------------------------------------
 
@@ -86,13 +76,13 @@ print (tle1)
 print ("---------------------------------")
 
 name = "ISS (ZARYA)"
-"""
+
 iss = ephem.readtle(name, tle0, tle1)
 
 obs = ephem.Observer()
 obs.lat = location.latitude
 obs.long = location.longitude
-
+"""
 for p in range(3):
     tr, azr, tt, altt, ts, azs = obs.next_pass(iss)
     while tr < ts :
@@ -105,7 +95,11 @@ for p in range(3):
 """
 #--------------------------------------------------------------------------
 alt = 2077
-print (get_next_pass(location.latitude, location.longitude, alt, name, tle0, tle1))
+i = 0
+while i < 5:
+    if get_next_pass(location.latitude, location.longitude, alt, name, tle0, tle1):
+        print (get_next_pass(location.latitude, location.longitude, alt, name, tle0, tle1))
+        i = i + 1
 
 
 
