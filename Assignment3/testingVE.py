@@ -27,9 +27,16 @@ def get_next_pass(lat, lon, alt, name, tle0, tle1):
     observer.elevation = alt
     observer.pressure = 0
     observer.horizon = '-0:34'
+    counter = 0
+    masscounter = 0
+    ending = False
+    washere = False
+    newevent = 0
     for p in range(45):
+        ending = False
         tr, azr, tt, altt, ts, azs = observer.next_pass(sat)
         while tr < ts:
+            ending = False
             observer.date = tr
             sun = ephem.Sun()
             sun.compute(observer)
@@ -37,11 +44,21 @@ def get_next_pass(lat, lon, alt, name, tle0, tle1):
             sun_alt = math.degrees(sun.alt)
             if sat.eclipsed is False and -18 < sun_alt < -6:
                 print ("%s %4.1f %5.1f %4.1f %+6.1f" % (tr, math.degrees(sat.alt), math.degrees(sat.az), math.degrees(sat.sublat), math.degrees(sat.sublong)))
-                if readonce == True:
+                ending = True
+                washere = True
                     
             tr = ephem.Date(tr + 60.0 * ephem.second)
-        observer.date = tr + ephem.minute
+            if ending == False and washere == True:
+                counter = counter + 1
+            if counter == 5:
+                print ("New Event!!!")
+                masscounter = masscounter + 1
+                ending = False
+                washere = False
+                counter = 0
+                newevent = newevent + 1
 
+        observer.date = tr + ephem.minute
     print("---------------------------------------------------------")
            
 
@@ -73,8 +90,8 @@ name = "ISS (ZARYA)"
 readonce = True
 #--------------------------------------------------------------------------
 alt = 0
-
-while 1:
+programrunning = True
+while programrunning:
     get_next_pass(location.latitude, location.longitude, alt, name, tle0, tle1)
 
 
