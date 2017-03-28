@@ -8,6 +8,7 @@ st = SpaceTrackClient('jstrad@vt.edu', 'johnnyboy1234567')
 import zipcode
 from geopy.geocoders import Nominatim
 
+
 def seconds_between(d1, d2):
     return abs((d2 - d1).seconds)
 
@@ -26,26 +27,41 @@ def get_next_pass(lat, lon, alt, name, tle0, tle1):
     observer.elevation = alt
     observer.pressure = 0
     observer.horizon = '-0:34'
-    """
-    now = datetime.datetime.utcnow()
-    observer.date = now
-    """
-    for p in range(15):
+    counter = 0
+    masscounter = 0
+    ending = False
+    washere = False
+    newevent = 0
+    for p in range(45):
+        ending = False
         tr, azr, tt, altt, ts, azs = observer.next_pass(sat)
-
         while tr < ts:
+            ending = False
             observer.date = tr
             sun = ephem.Sun()
             sun.compute(observer)
             sat.compute(observer)
             sun_alt = math.degrees(sun.alt)
-            #print (sun_alt)
             if sat.eclipsed is False and -18 < sun_alt < -6:
-                print ("%s %4.1f %5.1f" % (tr, math.degrees(sat.alt), math.degrees(sat.az)))
-            tr = ephem.Date(tr + 60.0 * ephem.second)  
-            
-        
+                print ("%s %4.1f %5.1f %4.1f %+6.1f" % (tr, math.degrees(sat.alt), math.degrees(sat.az), math.degrees(sat.sublat), math.degrees(sat.sublong)))
+                ending = True
+                washere = True
+                    
+            tr = ephem.Date(tr + 60.0 * ephem.second)
+            if ending == False and washere == True:
+                counter = counter + 1
+            if counter == 5:
+                print ("New Event!!!")
+                masscounter = masscounter + 1
+                ending = False
+                washere = False
+                counter = 0
+                newevent = newevent + 1
+        if newevent == 5:
+            sleep(10)  
         observer.date = tr + ephem.minute
+    print("---------------------------------------------------------")
+           
 
 #---------------------------------------------------------------------
 
@@ -72,34 +88,12 @@ print ("---------------------------------")
 
 name = "ISS (ZARYA)"
 
-#iss = ephem.readtle(name, tle0, tle1)
-
-"""
-for p in range(3):
-    tr, azr, tt, altt, ts, azs = obs.next_pass(iss)
-    while tr < ts :
-        obs.date = tr
-        iss.compute(obs)
-        print ("%s %4.1f %5.1f" % (tr, math.degrees(iss.alt), math.degrees(iss.az)))
-        tr = ephem.Date(tr + 60.0 * ephem.second)
-    print
-    obs.date = tr + ephem.minute
-"""
+readonce = True
 #--------------------------------------------------------------------------
 alt = 0
-#print (get_next_pass(location.latitude, location.longitude, alt, name, tle0, tle1))
-
-i = 0
-while 1:
+programrunning = True
+while programrunning:
     get_next_pass(location.latitude, location.longitude, alt, name, tle0, tle1)
-    print ("Satellite Information:")
-    tleInfo = st.tle_latest(norad_cat_id=[25544], ordinal=1, format='tle')
-    print (tleInfo)
-    tle = ''.join(tleInfo)
-    tle0, tle1 = tle.splitlines()
-    
-
-
 
 
 
