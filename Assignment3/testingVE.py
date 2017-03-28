@@ -57,7 +57,8 @@ def get_next_pass(lat, lon, alt, name, tle0, tle1):
                 washere = False
                 counter = 0
                 newevent = newevent + 1
-
+        if newevent == 5:
+            sleep(10)  
         observer.date = tr + ephem.minute
     print("---------------------------------------------------------")
            
