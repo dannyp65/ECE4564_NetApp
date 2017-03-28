@@ -8,6 +8,7 @@ st = SpaceTrackClient('jstrad@vt.edu', 'johnnyboy1234567')
 import zipcode
 from geopy.geocoders import Nominatim
 
+dates_viewable = []
 
 def seconds_between(d1, d2):
     return abs((d2 - d1).seconds)
@@ -18,7 +19,6 @@ def datetime_from_time(tr):
     return dt
 
 def get_next_pass(lat, lon, alt, name, tle0, tle1):
-
     sat = ephem.readtle(name, tle0, tle1)
 
     observer = ephem.Observer()
@@ -31,7 +31,7 @@ def get_next_pass(lat, lon, alt, name, tle0, tle1):
     masscounter = 0
     ending = False
     washere = False
-    newevent = 0
+    time_flag = False
     for p in range(45):
         ending = False
         tr, azr, tt, altt, ts, azs = observer.next_pass(sat)
@@ -46,19 +46,28 @@ def get_next_pass(lat, lon, alt, name, tle0, tle1):
                 print ("%s %4.1f %5.1f %4.1f %+6.1f" % (tr, math.degrees(sat.alt), math.degrees(sat.az), math.degrees(sat.sublat), math.degrees(sat.sublong)))
                 ending = True
                 washere = True
+                if time_flag == False:
+                    time_flag = True
+                    year1, month1, day1, hour, minute, second = tr.tuple()
                     
             tr = ephem.Date(tr + 60.0 * ephem.second)
             if ending == False and washere == True:
+                year, month, day, hour1, minute1, second1 = tr.tuple()
+                dates_viewable.append(datetime.datetime(year, month, day, hour, minute, int(second)))
                 counter = counter + 1
+                print ("New Event")
+                ending = False
+                washere = False
+                time_flag = False
             if counter == 5:
-                print ("New Event!!!")
+                print ("Five Events Reached!")
                 masscounter = masscounter + 1
                 ending = False
                 washere = False
                 counter = 0
-                newevent = newevent + 1
-        if newevent == 5:
-            sleep(10)  
+                print(dates_viewable)
+                sleep(10)
+   
         observer.date = tr + ephem.minute
     print("---------------------------------------------------------")
            
