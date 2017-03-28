@@ -50,15 +50,17 @@ def get_next_pass(lat, lon, alt, name, tle0, tle1):
             tr = ephem.Date(tr + 60.0 * ephem.second)
             if ending == False and washere == True:
                 counter = counter + 1
+                print ("New Event")
+                ending = False
+                washere = False
             if counter == 5:
-                print ("New Event!!!")
+                print ("Five Events Reached!")
                 masscounter = masscounter + 1
                 ending = False
                 washere = False
                 counter = 0
-                newevent = newevent + 1
-        if newevent == 5:
-            sleep(10)  
+                sleep(10)
+   
         observer.date = tr + ephem.minute
     print("---------------------------------------------------------")
            
