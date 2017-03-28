@@ -5,14 +5,28 @@ from twilio.rest import TwilioRestClient
 import datetime
 import sys
 import pygame
-import RPi.GPIO as GPIO
+#import RPi.GPIO as GPIO
 
 now = datetime.datetime.now()
 def get_args():
     opt_in_opt = "ERROR: cannot take another opt flag as a parameter"
     cmd_args = sys.argv
+    zip_op = '-z'
+    sat_op = '-s'
+    if len(cmd_args) != 5:
+        print('Error: Invalid number of argument!')
+        sys.exit()  # raise SystemExit
     cmd_len = len(cmd_args)
-    for i in range(1, cmd_len):
+    if cmd_args[1] == zip_op and cmd_args[3] == sat_op:
+        zip = cmd_args[2]
+        sat = cmd_args[4]
+        if len(zip) != 5:
+            print('Error: Invalid Zipcode!')
+            sys.exit()
+    else:
+        print('Error: Invalid parameters')
+        sys.exit()
+    return zip, sat
 
 
 def playASound():
@@ -35,23 +49,39 @@ def get_OWM(zipcode):
     sky_list = []
     user_token = '9738f6dd8889617a46ed1ab4109dffb6'
     full_api_url = 'http://api.openweathermap.org/data/2.5/forecast/daily?zip=' + zipcode + ',us&cnt=16&units=imperial&APPID=' + user_token
-    r = requests.get(full_api_url)
-    weather_data = json.loads(r.text)
-    weather_list = weather_data['list']
-    for i in range(0,16):
-        cloud_list.append(weather_list[i]['clouds'])
-    return cloud_list
+    if len(zipcode) != 5:
+        print('Error: Invalid zipcode in get_OWM(zipcode) call!')
+        sys.exit()
+    try:
+        r = requests.get(full_api_url)
+    except:
+        print('Error: Weather API request error!')
+        sys.exit()
+    try:
+        weather_data = json.loads(r.text)
+        weather_list = weather_data['list']
+        for i in range(0,16):
+            cloud_list.append(weather_list[i]['clouds'])
+        return cloud_list
+    except:
+        print('Error: Invalid response from weather API')
+        sys.exit()
 
 def displayWeather(cloud):
     today = now = datetime.datetime.now()
     date = today.day
     month = today.month
-    print ('Weather Forecast: Cloudiness',)
-    for i in range(0,16):
-        print(month, (date+i), sep='/', end='' )
-        print(': ', cloud[i], '%', '\t', sep= '', end='')
-        if i == 7:
-            print('\n')
+    try:
+        if len(cloud) == 16:
+            print ('Weather Forecast: Cloudiness',)
+            for i in range(0,16):
+                print(month, (date+i), sep='/', end='' )
+                print(': ', cloud[i], '%', '\t', sep= '', end='')
+                if i == 7:
+                    print('\n')
+    except Exception as a:
+        print('Error: Cannot display weather data!')
+
 def init_LED():
     GPIO.setmode(GPIO.BCM)
     GPIO.setwarnings(False)
@@ -70,6 +100,11 @@ def control_LED(control):
         GPIO.output(23, GPIO.LOW)
 
 
+
+
+zip, sat = get_args()
 x = get_OWM('24060')
-displayWeather(x)
+
+displayWeather(get_OWM(zip))
 playASound()
+print(zip,sat)
