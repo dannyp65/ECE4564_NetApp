@@ -101,8 +101,11 @@ def control_LED(control):
         GPIO.output(23, GPIO.LOW)
 
 
-control_LED('off')
-sl
+GPIO.setmode(GPIO.BCM)
+GPIO.setwarnings(False)
+GPIO.setup(18,GPIO.OUT)
+GPIO.setup(23,GPIO.OUT)
+GPIO.setup(24,GPIO.OUT)
 
 zip, sat = get_args()
 x = get_OWM('24060')
@@ -113,5 +116,5 @@ displayWeather(x)
 #today = datetime.today
 while 1:
     control_LED('off')
-    sleep(1)
+    time.sleep(1)
     control_LED('on')
