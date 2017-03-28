@@ -4,8 +4,9 @@ import json
 from twilio.rest import TwilioRestClient
 import datetime
 import sys
+import time
 import pygame
-#import RPi.GPIO as GPIO
+import RPi.GPIO as GPIO
 
 now = datetime.datetime.now()
 def get_args():
@@ -46,7 +47,6 @@ def sendMess(mess, num):
 
 def get_OWM(zipcode):
     cloud_list = []
-    sky_list = []
     user_token = '9738f6dd8889617a46ed1ab4109dffb6'
     full_api_url = 'http://api.openweathermap.org/data/2.5/forecast/daily?zip=' + zipcode + ',us&cnt=16&units=imperial&APPID=' + user_token
     if len(zipcode) != 5:
@@ -68,17 +68,18 @@ def get_OWM(zipcode):
         sys.exit()
 
 def displayWeather(cloud):
-    today = now = datetime.datetime.now()
+    today = datetime.date.today()
     date = today.day
     month = today.month
     try:
         if len(cloud) == 16:
             print ('Weather Forecast: Cloudiness',)
             for i in range(0,16):
-                print(month, (date+i), sep='/', end='' )
+                print(today.month, today.day, sep='/', end='' )
                 print(': ', cloud[i], '%', '\t', sep= '', end='')
                 if i == 7:
                     print('\n')
+                today += datetime.timedelta(days=1)
     except Exception as a:
         print('Error: Cannot display weather data!')
 
@@ -100,11 +101,17 @@ def control_LED(control):
         GPIO.output(23, GPIO.LOW)
 
 
-
+control_LED('off')
+sl
 
 zip, sat = get_args()
 x = get_OWM('24060')
-
-displayWeather(get_OWM(zip))
-playASound()
-print(zip,sat)
+#print(x)
+displayWeather(x)
+#playASound()
+#print(zip,sat)
+#today = datetime.today
+while 1:
+    control_LED('off')
+    sleep(1)
+    control_LED('on')
