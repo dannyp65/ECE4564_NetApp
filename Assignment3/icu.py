@@ -115,6 +115,8 @@ displayWeather(x)
 #print(zip,sat)
 #today = datetime.today
 while 1:
+    control_LED('on')
+    time.sleep(1)
     control_LED('off')
     time.sleep(1)
-    control_LED('on')
+    
