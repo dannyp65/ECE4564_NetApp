@@ -32,7 +32,7 @@ def get_next_pass(lat, lon, alt, name, tle0, tle1):
     ending = False
     washere = False
     time_flag = False
-    for p in range(45):
+    for p in range(500):
         ending = False
         tr, azr, tt, altt, ts, azs = observer.next_pass(sat)
         while tr < ts:
@@ -66,7 +66,7 @@ def get_next_pass(lat, lon, alt, name, tle0, tle1):
                 washere = False
                 counter = 0
                 print(dates_viewable)
-                sleep(10)
+                break
    
         observer.date = tr + ephem.minute
     print("---------------------------------------------------------")
