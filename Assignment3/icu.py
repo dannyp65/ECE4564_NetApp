@@ -111,7 +111,7 @@ zip, sat = get_args()
 x = get_OWM('24060')
 #print(x)
 displayWeather(x)
-#playASound()
+playASound()
 #print(zip,sat)
 #today = datetime.today
 while 1:
