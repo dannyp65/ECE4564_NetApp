@@ -2,10 +2,9 @@ import datetime
 import logging
 
 import asyncio
-
+import RPi.GPIO as GPIO
 import aiocoap.resource as resource
 import aiocoap
-
 import pickle
 from mcpi.minecraft import Minecraft
 
@@ -65,11 +64,56 @@ class BlockResource(resource.Resource):
         payload = ("I've accepted the new payload. You may inspect it here in "\
                 "Python's repr format:\n\n%r"%self.content).encode('utf8')
         return aiocoap.Message(payload=payload)
+        print("ERROR: parameters -b and -k need to be set")
+        sys.exit()
 
+# calculates the thresholds and enables the GPIO pins to light up LED
+def LEDLight(user_token):
+    #turn off all LEDs
+    GPIO.output(24,GPIO.LOW)
+    GPIO.output(18,GPIO.LOW)
+    GPIO.output(23,GPIO.LOW)
+    if user_token == 3:
+        #turn on green
+        print('LED is green\n')
+        GPIO.output(24, GPIO.HIGH)
+        GPIO.output(18,GPIO.LOW)
+        GPIO.output(23,GPIO.LOW)
+    elif user_token == 2:
+        #turn on blue
+        print('LED is yellow\n')
+        GPIO.output(23, GPIO.LOW)
+        GPIO.output(24, GPIO.LOW)
+        GPIO.output(18,GPIO.HIGH)
+    elif user_token == 1:
+        #turn on red
+        print('LED is red\n')
+        GPIO.output(23, GPIO.HIGH)
+        GPIO.output(18,GPIO.LOW)
+        GPIO.output(24,GPIO.LOW)
+    else:
+        #turn on yellow = green + red
+        print('LED is yellow\n')
+        GPIO.output(23, GPIO.HIGH)
+        GPIO.output(24, GPIO.HIGH)
+        GPIO.output(18,GPIO.LOW)  
+        
+def init_LED():
+    print("Setting up GPIO pins for the LED")
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setwarnings(False)
+    GPIO.setup(18,GPIO.OUT)
+    GPIO.setup(23,GPIO.OUT)
+    GPIO.setup(24,GPIO.OUT)
+    GPIO.output(24,GPIO.LOW)
+    GPIO.output(18,GPIO.LOW)
+    GPIO.output(23,GPIO.LOW)
+    
 logging.basicConfig(level=logging.INFO)
 logging.getLogger("coap-server").setLevel(logging.DEBUG)
 
 def main():
+    init_LED()
     global token
     token = 1
     global counter
