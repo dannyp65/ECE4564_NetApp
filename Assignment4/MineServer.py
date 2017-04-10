@@ -39,16 +39,14 @@ class BlockResource(resource.Resource):
         counter += 1
         if token > 3:
            token = 1
-        print('PUT payload: %s' % request.payload)
         self.content = request.payload
         data_back = pickle.loads(request.payload)
+        print('PUT payload: ', data_back)
         token_new = data_back[0]
         x = data_back[1]
         y = data_back[2]
         z = data_back[3]
         block_type = data_back[4]
-        print(counter)
-        print(x, y, z, block_type)
         if counter < 10:
             mc.setBlock(x, y, z, block_type)
             mc.player.setPos(x - 1, y, z + 1)
@@ -66,7 +64,6 @@ class BlockResource(resource.Resource):
         payload = ("I've accepted the new payload. You may inspect it here in "\
                 "Python's repr format:\n\n%r"%self.content).encode('utf8')
         return aiocoap.Message(payload=payload)
-        sys.exit()
 
 # calculates the thresholds and enables the GPIO pins to light up LED
 def LEDLight(user_token):
