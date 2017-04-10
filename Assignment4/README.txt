@@ -9,12 +9,12 @@ Initialize process:
   Server Raspberry Pi:
     1. Open command prompt and type 'hostname -I' to obtain the Server's IP address 
     2. Make sure that all the extra libraries were installed on your Rapsberry Pi (see Extra Libraries)
-    3. Run server.py using python 3 (Ex: python3 server.py)
+    3. Run Mineserver.py using python 3 (Ex: python3 server.py)
     
   Player Raspberry Pi:
     1. Make sure that all the extra libraries were installed on your Rapsberry Pi (see Extra Libraries)
-    2. Run clientGET#.py "#server_host_addr" using python 3 with # is your player token number and server's IP address.
-          Ex: python3 clientGET1.py "187.28.31.1"
+    2. Run client#.py "#server_host_addr" using python 3 with # is your player token [A,B,C] and server's IP address.
+          Ex: python3 clientA.py "187.28.31.1"
     
     
 Extra Libraries:
