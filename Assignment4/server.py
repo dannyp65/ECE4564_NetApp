@@ -49,7 +49,6 @@ class BlockResource(resource.Resource):
         block_type = data_back[4]
         print(counter)
         print(x, y, z, block_type)
-        LEDLight(token_new)
         if counter < 10:
             mc.setBlock(x, y, z, block_type)
             mc.player.setPos(x - 1, y, z + 1)
@@ -61,7 +60,9 @@ class BlockResource(resource.Resource):
             mc.player.setPos(x - 1, y, z - 1)
         elif counter == 21:
             token = 4
+            token_new = 4
             mc.postToChat("Finished Building Wall!")
+        LEDLight(token_new)
         payload = ("I've accepted the new payload. You may inspect it here in "\
                 "Python's repr format:\n\n%r"%self.content).encode('utf8')
         return aiocoap.Message(payload=payload)
