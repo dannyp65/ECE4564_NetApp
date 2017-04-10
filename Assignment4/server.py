@@ -7,6 +7,9 @@ import aiocoap.resource as resource
 import aiocoap
 
 import pickle
+from mcpi.minecraft import Minecraft
+
+mc = Minecraft.create()
 
 
 class BlockResource(resource.Resource):
@@ -23,18 +26,28 @@ class BlockResource(resource.Resource):
 
     async def render_get(self, request):
         #return aiocoap.Message(payload=self.content)
-        x = 15
-        y = 25
-        z = -69.3
-        token = 1
+        global token
+        x, y, z = mc.player.getPos()
         send_data = (x, y, z, token)
         send_pickle = pickle.dumps(send_data)
+        token += 1 
+        if token > 3:
+            token = 1
         return aiocoap.Message(payload=send_pickle)
         
 
     async def render_put(self, request):
         print('PUT payload: %s' % request.payload)
         self.content = request.payload
+        data_back = pickle.loads(request.payload)
+        token_new = data_back[0]
+        x = data_back[1]
+        y = data_back[2]
+        z = data_back[3]
+        block_type = data_back[4]
+
+        mc.setBlock(x, y, z, block_type)
+        mc.player.setPos(x - 1, y , z + 1)
         payload = ("I've accepted the new payload. You may inspect it here in "\
                 "Python's repr format:\n\n%r"%self.content).encode('utf8')
         return aiocoap.Message(payload=payload)
@@ -43,6 +56,8 @@ logging.basicConfig(level=logging.INFO)
 logging.getLogger("coap-server").setLevel(logging.DEBUG)
 
 def main():
+    global token
+    token = 1
     # Resource tree creation
     root = resource.Site()
 
