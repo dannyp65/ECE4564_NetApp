@@ -49,6 +49,7 @@ class BlockResource(resource.Resource):
         block_type = data_back[4]
         print(counter)
         print(x, y, z, block_type)
+        LEDLight(token_new)
         if counter < 10:
             mc.setBlock(x, y, z, block_type)
             mc.player.setPos(x - 1, y, z + 1)
@@ -64,7 +65,6 @@ class BlockResource(resource.Resource):
         payload = ("I've accepted the new payload. You may inspect it here in "\
                 "Python's repr format:\n\n%r"%self.content).encode('utf8')
         return aiocoap.Message(payload=payload)
-        print("ERROR: parameters -b and -k need to be set")
         sys.exit()
 
 # calculates the thresholds and enables the GPIO pins to light up LED
@@ -81,7 +81,7 @@ def LEDLight(user_token):
         GPIO.output(23,GPIO.LOW)
     elif user_token == 2:
         #turn on blue
-        print('LED is yellow\n')
+        print('LED is blue\n')
         GPIO.output(23, GPIO.LOW)
         GPIO.output(24, GPIO.LOW)
         GPIO.output(18,GPIO.HIGH)
@@ -118,6 +118,7 @@ def main():
     token = 1
     global counter
     counter = 0
+    init_LED()
     # Resource tree creation
     root = resource.Site()
 
