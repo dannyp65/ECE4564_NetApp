@@ -5,8 +5,6 @@ import sys
 
 from aiocoap import *
 
-logging.basicConfig(level=logging.INFO)
-
 def get_args():
     total = len(sys.argv)
     if total != 2:
@@ -14,6 +12,8 @@ def get_args():
         sys.exit()
     else:
         return sys.argv[1]
+
+logging.basicConfig(level=logging.INFO)
 
 async def main():
     ip = get_args()
@@ -36,11 +36,11 @@ async def main():
 
 #Making code for player A
 #sends block type 1
-    if token == 1:
+    if token == 3:
         context = await Context.create_client_context()
         await asyncio.sleep(2)
 
-        payload = (token, x + 1, y, z, 20)
+        payload = (token, x + 1, y, z, 41)
         send_data = pickle.dumps(payload)
         request = Message(code=PUT, payload=send_data)
         request.opt.uri_host = ip
@@ -52,8 +52,7 @@ async def main():
     if token == 4:
         print("Wall is complete")
         sys.exit()
-        
+               
 if __name__ == "__main__":
     while 1:
         asyncio.get_event_loop().run_until_complete(main())
-    

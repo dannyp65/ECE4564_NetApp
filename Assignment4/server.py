@@ -30,13 +30,16 @@ class BlockResource(resource.Resource):
         x, y, z = mc.player.getPos()
         send_data = (x, y, z, token)
         send_pickle = pickle.dumps(send_data)
-        token += 1 
-        if token > 3:
-            token = 1
         return aiocoap.Message(payload=send_pickle)
         
 
     async def render_put(self, request):
+        global counter
+        global token
+        token += 1
+        counter += 1
+        if token > 3:
+           token = 1
         print('PUT payload: %s' % request.payload)
         self.content = request.payload
         data_back = pickle.loads(request.payload)
@@ -45,9 +48,20 @@ class BlockResource(resource.Resource):
         y = data_back[2]
         z = data_back[3]
         block_type = data_back[4]
-
-        mc.setBlock(x, y, z, block_type)
-        mc.player.setPos(x - 1, y , z + 1)
+        print(counter)
+        print(x, y, z, block_type)
+        if counter < 10:
+            mc.setBlock(x, y, z, block_type)
+            mc.player.setPos(x - 1, y, z + 1)
+        elif counter == 10:
+            mc.setBlock(x, y, z, block_type)
+            mc.player.setPos(x - 1, y, z)
+        elif counter < 21:
+            mc.setBlock(x, y + 1, z, block_type)
+            mc.player.setPos(x - 1, y, z - 1)
+        elif counter == 21:
+            token = 4
+            mc.postToChat("Finishing Building Wall!")
         payload = ("I've accepted the new payload. You may inspect it here in "\
                 "Python's repr format:\n\n%r"%self.content).encode('utf8')
         return aiocoap.Message(payload=payload)
@@ -58,6 +72,8 @@ logging.getLogger("coap-server").setLevel(logging.DEBUG)
 def main():
     global token
     token = 1
+    global counter
+    counter = 0
     # Resource tree creation
     root = resource.Site()
 
