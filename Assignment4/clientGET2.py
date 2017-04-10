@@ -19,7 +19,7 @@ async def main():
     ip = get_args()
     protocol = await Context.create_client_context()
 
-    request = Message(code=GET, uri='coap://localhost/other/block')
+    request = Message(code=GET, uri='coap://' + ip + '/other/block')
 
     try:
         response = await protocol.request(request).response
@@ -27,6 +27,7 @@ async def main():
         print('Failed to fetch resource:')
         print(e)
     else:
+        global token
         receive_data = pickle.loads(response.payload)
         x = receive_data[0]
         y = receive_data[1]
