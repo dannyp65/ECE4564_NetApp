@@ -40,7 +40,7 @@ async def main():
         context = await Context.create_client_context()
         await asyncio.sleep(2)
 
-        payload = (token, x + 1, y, z, 20)
+        payload = (token, x + 1, y, z, 57)
         send_data = pickle.dumps(payload)
         request = Message(code=PUT, payload=send_data)
         request.opt.uri_host = ip

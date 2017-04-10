@@ -61,7 +61,7 @@ class BlockResource(resource.Resource):
             mc.player.setPos(x - 1, y, z - 1)
         elif counter == 21:
             token = 4
-            mc.postToChat("Finishing Building Wall!")
+            mc.postToChat("Finished Building Wall!")
         payload = ("I've accepted the new payload. You may inspect it here in "\
                 "Python's repr format:\n\n%r"%self.content).encode('utf8')
         return aiocoap.Message(payload=payload)
