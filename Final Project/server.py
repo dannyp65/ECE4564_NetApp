@@ -11,15 +11,15 @@ def get_args():
     opt_in_opt = "ERROR: cannot take another opt flag as a parameter"
     cmd_args = sys.argv
     cmd_len = len(cmd_args)
-    a_check, c_check, s_check, r_check = False, False, False, False
-    a_opt, c_opt, s_opt, r_opt = '', '', '', ''
+    a_check, z_check, r_check = False, False, False
+    a_opt, z_opt, r_opt = '', '', ''
     for i in range(1, cmd_len):
-        if cmd_args[i] == a_opt or cmd_args[i] == c_opt or cmd_args[i] == s_opt or cmd_args[i] == r_opt:
+        if cmd_args[i] == a_opt or cmd_args[i] == z_opt or cmd_args[i] == r_opt:
             continue
         if cmd_args[i] == '-a':
             try:
                 a_opt = cmd_args[i + 1]  # raise out of range
-                if a_opt == '-a' or a_opt == '-c' or a_opt == '-s' or a_opt == '-r':
+                if a_opt == '-a' or a_opt == '-z' or a_opt == '-r':
                     print(opt_in_opt, '1')
                     sys.exit()  # raise SystemExit
             except SystemExit:
@@ -28,34 +28,22 @@ def get_args():
                 print("ERROR: no Activity given")
                 raise SystemExit
             a_check = True
-        elif cmd_args[i] == '-s':
+        elif cmd_args[i] == '-z':
             try:
-                s_opt = cmd_args[i + 1]
-                if s_opt == '-a' or s_opt == '-c' or s_opt == '-s' or s_opt == '-r':
-                    print(opt_in_opt, '2')
-                    sys.exit()
-            except SystemExit:
-                raise SystemExit
-            except:
-                print("ERROR: no State given")
-                raise SystemExit
-            s_check = True
-        elif cmd_args[i] == '-c':
-            try:
-                c_opt = cmd_args[i + 1]
-                if c_opt == '-a' or c_opt == '-c' or c_opt == '-s' or c_opt == '-r':
+                z_opt = cmd_args[i + 1]
+                if z_opt == '-a' or z_opt == '-z' or z_opt == '-r':
                     print(opt_in_opt, '3')
                     sys.exit()
             except SystemExit:
                 raise SystemExit
             except:
-                print("ERROR: no City given")
+                print("ERROR: no Zipcode given")
                 raise SystemExit
-            c_check = True
+            z_check = True
         elif cmd_args[i] == '-r':
             try:
                 r_opt = cmd_args[i + 1]
-                if r_opt == '-a' or r_opt == '-c' or r_opt == '-s' or r_opt == '-r':
+                if r_opt == '-a' or r_opt == '-z' or r_opt == '-r':
                     print(opt_in_opt, '4')
                     sys.exit()
             except SystemExit:
@@ -70,8 +58,8 @@ def get_args():
         else:
             print("ERROR: ELSE", cmd_args[i])
             sys.exit()
-    if a_check and c_check and s_check and r_check:
-        return a_opt, c_opt, s_opt, r_opt
+    if a_check and z_check and r_check:
+        return a_opt, z_opt, r_opt
     else:
         print("ERROR: all parameters need to be set")
         sys.exit()
@@ -109,13 +97,13 @@ def main():
 	size = 1024
 	s = None
 	
-	activity, city, state, radius = get_args()
-	print(activity, city, state, radius)
+	activity, zipcode, radius = get_args()
+	print(activity, zipcode, radius)
 	#example of using trail API with activity, city, state, and radius
 	# there are only 2 types of activites:  
 	#to-do: parse zipcode to city and state
 	trail_data = get_Trail(activity, city, state, radius)
-	print (trail_data)
+	print (trail_data[0], trail_data[1])
 	try:
 	    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Create a socket object that use IPv4 and TCP
 	    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
