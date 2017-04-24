@@ -76,54 +76,55 @@ def get_args():
          print("ERROR: all parameters need to be set")
          sys.exit()
 
-def get_OWM(city,state):
-    cloud_list = []
-    user_token = '9738f6dd8889617a46ed1ab4109dffb6'
-    full_api_url = 'http://api.openweathermap.org/data/2.5/weather?q=' + city + ',' + state + '&units=imperial&APPID=' + user_token
-    try:
-        r = requests.get(full_api_url)
-    except:
-        print('Error: Weather API request error!')
-        sys.exit()
-    try:
-        weather_data = json.loads(r.text)
-        return weather_data
+def get_OWM(city, state):
+     cloud_list = []
+     user_token = '9738f6dd8889617a46ed1ab4109dffb6'
+     full_api_url = 'http://api.openweathermap.org/data/2.5/weather?q=' + city + ',' + state + '&units=imperial&APPID=' + user_token
+     try:
+          r = requests.get(full_api_url)
+     except:
+          print('Error: Weather API request error!')
+          sys.exit()
+     weather_data = json.loads(r.text)
+     return weather_data
 
 def get_Trail(activity, city, state, radius):
-    full_api_url = 'https://trailapi-trailapi.p.mashape.com/?lon=-&q[activities_activity_type_name_eq]=' + activity + '&q[city_cont]=' + city + '&q[country_cont]=United+State&q[state_cont]=' + state +'&radius=' +radius
-    #api_url = 'https://trailapi-trailapi.p.mashape.com/?lat=' + lat + '&lon=' + long + '&q[activities_activity_type_name_eq]=' + activity +' &radius=' + radius
-    response = requests.get(full_api_url, headers={ "X-Mashape-Key": "kopJS5O41PmshhVPxUeXCkLj8rOQp14geTqjsnSiGdq8SoUTWR", "Accept": "tapplication/json"})
-    return json.loads(response.text)
+     full_api_url = 'https://trailapi-trailapi.p.mashape.com/?lon=-&q[activities_activity_type_name_eq]=' + activity + '&q[city_cont]=' + city + '&q[country_cont]=United+State&q[state_cont]=' + state +'&radius=' +radius
+     #api_url = 'https://trailapi-trailapi.p.mashape.com/?lat=' + lat + '&lon=' + long + '&q[activities_activity_type_name_eq]=' + activity +' &radius=' + radius
+     response = requests.get(full_api_url, headers={ "X-Mashape-Key": "kopJS5O41PmshhVPxUeXCkLj8rOQp14geTqjsnSiGdq8SoUTWR", "Accept": "tapplication/json"})
+     return json.loads(response.text)
 
 def main():       
-    host = ''
-    port = 50003
-    backlog = 5
-    size = 1024
-    s = None
+     host = ''
+     port = 50003
+     backlog = 5
+     size = 1024
+     s = None
 	
-    activity, city, state, radius = get_args()
-    print(activity, city, state, radius)
-    #example of using trail API with activity, city, state, and radius
-	# there are only 2 types of activites:  
-	#to-do: parse zipcode to city and state
-	trail_data = get_Trail(activity, city, state, radius)
-    print (trail_data)
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Create a socket object that use IPv4 and TCP
-        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        s.bind((host, port))
-        s.listen(backlog)
-    except socket.error as message:  # error handling
-        if s:
-            s.close()
-        print("Could not open socket: " + str(message))
-        sys.exit(1)
-    print('Server Connected')
-    while 1:
-        wclient, address = s.accept()  # accept request from a client
-        pickled_data = wclient.recv(size)  # received a  data
-        wclient.close()
+     activity, city, state, radius = get_args()
+     print(activity, city, state, radius)
+     #example of using trail API with activity, city, state, and radius
+     # there are only 2 types of activites:  
+     #to-do: parse zipcode to city and state
+     trail_data = get_Trail(activity, city, state, radius)
+     print (trail_data)
+     weather = get_OWM(city, state)
+     print(weather)
+     try:
+          s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Create a socket object that use IPv4 and TCP
+          s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+          s.bind((host, port))
+          s.listen(backlog)
+     except socket.error as message:  # error handling
+          if s:
+               s.close()
+          print("Could not open socket: " + str(message))
+          sys.exit(1)
+     print('Server Connected')
+     while 1:
+          wclient, address = s.accept()  # accept request from a client
+          pickled_data = wclient.recv(size)  # received a  data
+          wclient.close()
 
 if __name__ == "__main__":
-    main()
+     main()
