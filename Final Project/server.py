@@ -76,13 +76,10 @@ def get_args():
          print("ERROR: all parameters need to be set")
          sys.exit()
 
-def get_OWM(zipcode):
+def get_OWM(city,state):
     cloud_list = []
     user_token = '9738f6dd8889617a46ed1ab4109dffb6'
-    full_api_url = 'http://api.openweathermap.org/data/2.5/weather?zip=' + zipcode + ',us&cnt=16&units=imperial&APPID=' + user_token
-    if len(zipcode) != 5:
-        print('Error: Invalid zipcode in get_OWM(zipcode) call!')
-        sys.exit()
+    full_api_url = 'http://api.openweathermap.org/data/2.5/weather?q=' + city + ',' + state + '&units=imperial&APPID=' + user_token
     try:
         r = requests.get(full_api_url)
     except:
@@ -90,13 +87,8 @@ def get_OWM(zipcode):
         sys.exit()
     try:
         weather_data = json.loads(r.text)
-        weather_list = weather_data['list']
-        for i in range(0,16):
-            cloud_list.append(weather_list[i]['clouds'])
-        return cloud_list
-    except:
-        print('Error: Invalid response from weather API')
-        sys.exit()
+        return weather_data
+
 def get_Trail(activity, city, state, radius):
     full_api_url = 'https://trailapi-trailapi.p.mashape.com/?lon=-&q[activities_activity_type_name_eq]=' + activity + '&q[city_cont]=' + city + '&q[country_cont]=United+State&q[state_cont]=' + state +'&radius=' +radius
     #api_url = 'https://trailapi-trailapi.p.mashape.com/?lat=' + lat + '&lon=' + long + '&q[activities_activity_type_name_eq]=' + activity +' &radius=' + radius
@@ -104,37 +96,34 @@ def get_Trail(activity, city, state, radius):
     return json.loads(response.text)
 
 def main():       
-	host = ''
-	port = 50003
-	backlog = 5
-	size = 1024
-	s = None
+    host = ''
+    port = 50003
+    backlog = 5
+    size = 1024
+    s = None
 	
-	activity, city, state, radius = get_args()
-	print(activity, city, state, radius)
-	#example of using trail API with activity, city, state, and radius
+    activity, city, state, radius = get_args()
+    print(activity, city, state, radius)
+    #example of using trail API with activity, city, state, and radius
 	# there are only 2 types of activites:  
 	#to-do: parse zipcode to city and state
 	trail_data = get_Trail(activity, city, state, radius)
-	print (trail_data)
-	try:
-	    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Create a socket object that use IPv4 and TCP
-	    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-	    s.bind((host, port))
-	    s.listen(backlog)
-	except socket.error as message:  # error handling
-	    if s:
-	        s.close()
-	    print("Could not open socket: " + str(message))
-	    sys.exit(1)
-	print('Server Connected')
-	while 1:
-	    wclient, address = s.accept()  # accept request from a client
-	    pickled_data = wclient.recv(size)  # received a  data
-
-
-
-	    wclient.close()
+    print (trail_data)
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Create a socket object that use IPv4 and TCP
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        s.bind((host, port))
+        s.listen(backlog)
+    except socket.error as message:  # error handling
+        if s:
+            s.close()
+        print("Could not open socket: " + str(message))
+        sys.exit(1)
+    print('Server Connected')
+    while 1:
+        wclient, address = s.accept()  # accept request from a client
+        pickled_data = wclient.recv(size)  # received a  data
+        wclient.close()
 
 if __name__ == "__main__":
     main()
