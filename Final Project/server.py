@@ -85,10 +85,11 @@ def get_OWM(zipcode):
     except:
         print('Error: Invalid response from weather API')
         sys.exit()
-def get_Trail(activity, city, state, radius):
-	full_api_url = 'https://trailapi-trailapi.p.mashape.com/?lon=-&q[activities_activity_type_name_eq]=' + activity + '&q[city_cont]=' + city+ '&q[country_cont]=United+State&q[state_cont]=' + state +'&radius=' +radius;
-	response = requests.get(full_api_url, headers={ "X-Mashape-Key": "kopJS5O41PmshhVPxUeXCkLj8rOQp14geTqjsnSiGdq8SoUTWR", "Accept": "tapplication/json"})
-	return json.loads(response.text);
+def get_Trail(activity, lat, long, radius):
+    #full_api_url = 'https://trailapi-trailapi.p.mashape.com/?lon=-&q[activities_activity_type_name_eq]=' + activity + '&q[city_cont]=' + city + '&q[country_cont]=United+State&q[state_cont]=' + state +'&radius=' +radius
+    api_url = 'https://trailapi-trailapi.p.mashape.com/?lat=' + lat + '&lon=' + long + '&q[activities_activity_type_name_eq]=' + activity +' &radius=' + radius
+    response = requests.get(api_url, headers={ "X-Mashape-Key": "kopJS5O41PmshhVPxUeXCkLj8rOQp14geTqjsnSiGdq8SoUTWR", "Accept": "tapplication/json"})
+    return json.loads(response.text)
 
 def main():       
 	host = ''
