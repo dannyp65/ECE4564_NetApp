@@ -108,7 +108,7 @@ def main():
     s = None
     # gets commandline arguments
     activity, city, state, radius = get_args()
-    print(activity, city, state, radius)
+    print(activity, city, state, radius, "\n")
     # example of using trail API with activity, city, state, and radius
     # there are only 2 types of activites:
     # to-do: parse zipcode to city and state
@@ -121,12 +121,15 @@ def main():
     if len(places) == 0:
         places.append("No " + activity + " locations found.")
 ###TESTING: print each location's details
+    c = 1
+    print("Found %d places:" %(len(places)))
     for x in places:
-        print(x)
+        print("%d."%(c), x, "\n")
+        c += 1
 ###---
     weather = get_OWM(city, state)
     weather_stats = [weather["main"]["temp"], weather["main"]["temp_min"], weather["main"]["temp_max"], weather["wind"]["speed"], weather["clouds"]["all"]]
-    print("\n-----\nTemp(Min, Current, Max): {0}{5}F, {1}{5}F, {2}{5}F \nWind Speed: {3} \nClouds: {4}\n-----\n".format(weather_stats[1], weather_stats[0], weather_stats[2], weather_stats[3], weather_stats[4], chr(176)))
+    print("-----\nTemp(Min, Current, Max): {0}{5}F, {1}{5}F, {2}{5}F \nWind Speed: {3} \nClouds: {4}\n-----\n".format(weather_stats[1], weather_stats[0], weather_stats[2], weather_stats[3], weather_stats[4], chr(176)))
     # socket connection and information transition
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Create a socket object that use IPv4 and TCP
