@@ -5,6 +5,28 @@ import time
 import requests
 import zipcode
 import json
+import pickle
+import hashlib
+
+
+# this function generates a MD5 checksum value from string
+def MD5_Encode(str):
+    endata = str.encode('utf-8')
+    m = hashlib.md5()
+    m.update(endata)
+    return m.hexdigest()
+
+
+# this function receive a string and a checksum value
+# it generate a new checksum value for the input string
+# then checking it with the checksum to see if the transferred string is correct
+def Check_Payload(str, checksum):
+    compute_checksum = MD5_Encode(str)
+    if checksum == compute_checksum:
+        return True
+    else:
+        return False
+
 
 def get_OWM(city, state):
     cloud_list = []
@@ -30,9 +52,9 @@ def get_Trail(activity, city, state, radius):
 
 def main():
     host = ''
-    port = 50003
+    port = 1234
     backlog = 5
-    size = 1024
+    size = 4096
     s = None
 
     # socket connection and information transition
@@ -48,37 +70,53 @@ def main():
         sys.exit(1)
     print('Server Connected')
     while 1:
+        print('\nWaiting to accept new connection...')
         wclient, address = s.accept()  # accept request from a client
         pickled_data = wclient.recv(size)  # received data
+        recv_data = pickle.loads(pickled_data)
 
-        # example of using trail API with activity, city, state, and radius
-        # there are only 2 types of activites:
-        # to-do: parse zipcode to city and state
-        places = []
-        trail_data = get_Trail(activity, city, state, radius)
-        # stores location's name, picture, rating, length, activity type, and directions from JSON dictionary in list
-        for loc in trail_data["places"]:
-            places.append([loc["name"], loc["activities"][0]["thumbnail"], loc["activities"][0]["rating"],
-                           loc["activities"][0]["length"], loc["activities"][0]["activity_type_name"],
-                           loc["directions"]])
-        # if nothing is found add a message to the list
-        if len(places) == 0:
-            places.append("No " + activity + " locations found.")
-            ###TESTING: print each location's details
-        c = 1
-        print("Found %d places:" % (len(places)))
-        for x in places:
-            print("%d." % (c), x, "\n")
-            c += 1
-            ###---
-        weather = get_OWM(city, state)
-        weather_stats = [weather["main"]["temp"], weather["main"]["temp_min"], weather["main"]["temp_max"],
-                         weather["wind"]["speed"], weather["clouds"]["all"]]
-        print(
-            "-----\nTemp(Min, Current, Max): {0}{5}F, {1}{5}F, {2}{5}F \nWind Speed: {3} \nClouds: {4}\n-----\n".format(
-                weather_stats[1], weather_stats[0], weather_stats[2], weather_stats[3], weather_stats[4], chr(176)))
+        params = recv_data[0]
+        recv_checksum = recv_data[1]
+        print('Payload Received\nChecking MD5 Checksum')
 
+        if Check_Payload(params, recv_checksum):  # checking if the the checksum to see if the information is correct
+            print('Checksum Verified')
+            activity = params.split(',')[0]
+            city = params.split(',')[1]
+            state = params.split(',')[2]
+            radius = params.split(',')[3]
+            print("Parameters Received From Client:", activity, city, state, radius)
+            # example of using trail API with activity, city, state, and radius
+            # there are only 2 types of activites:
+            # to-do: parse zipcode to city and state
+            places = []
+            trail_data = get_Trail(activity, city, state, radius)
+            # stores location's name, picture, rating, length, activity type, and directions from JSON dictionary in list
+            for loc in trail_data["places"]:
+                places.append([loc["name"], loc["activities"][0]["thumbnail"], loc["activities"][0]["rating"],
+                               loc["activities"][0]["length"], loc["activities"][0]["activity_type_name"],
+                               loc["directions"]])
+            # if nothing is found add a message to the list
+            if len(places) == 0:
+                places.append("No " + activity + " locations found.")
 
+            weather = get_OWM(city, state)
+            weather_stats = [weather["main"]["temp"], weather["main"]["temp_min"], weather["main"]["temp_max"],
+                             weather["wind"]["speed"], weather["clouds"]["all"]]
+
+            str_places = '[!]'.join(str(x) for x in places)
+            str_weather = '[!]'.join(str(y) for y in weather_stats)
+            str_send = str_places + '[?]' + str_weather
+            #print(str_send)
+            send_checksum = MD5_Encode(str_send)
+            tuple_send = (str_send, send_checksum)
+            pickle_send = pickle.dumps(tuple_send)
+            print('Sending Requested Data Back to Client')
+            wclient.send(pickle_send)
+        else:  # if checksum not correct, send an error message to the client
+            print('MD5 Checksum Not Verified')
+            wclient.send(b'MD5 Verification Fail!')
+        # close the connection with client
         wclient.close()
 
 

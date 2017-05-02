@@ -12,15 +12,27 @@ def get_args():
     opt_in_opt = "ERROR: cannot take another opt flag as a parameter"
     cmd_args = sys.argv
     cmd_len = len(cmd_args)
-    a_check, c_check, s_check, r_check = False, False, False, False
-    a_opt, c_opt, s_opt, r_opt = '', '', '', ''
+    p_check, a_check, c_check, s_check, r_check = False, False, False, False, False
+    p_opt, a_opt, c_opt, s_opt, r_opt = '', '', '', '', ''
     for i in range(1, cmd_len):
-        if cmd_args[i] == a_opt or cmd_args[i] == c_opt or cmd_args[i] == s_opt or cmd_args[i] == r_opt:
+        if cmd_args[i] == p_opt or cmd_args[i] == a_opt or cmd_args[i] == c_opt or cmd_args[i] == s_opt or cmd_args[i] == r_opt:
             continue
-        if cmd_args[i] == '-a':
+        if cmd_args[i] == '-p':
+            try:
+                p_opt = cmd_args[i + 1]  # raise out of range
+                if p_opt == '-p' or p_opt == '-a' or p_opt == '-c' or p_opt == '-s' or p_opt == '-r':
+                    print(opt_in_opt, '1')
+                    sys.exit()  # raise SystemExit
+            except SystemExit:
+                raise SystemExit
+            except:
+                print("ERROR: no Port given")
+                raise SystemExit
+            p_check = True
+        elif cmd_args[i] == '-a':
             try:
                 a_opt = cmd_args[i + 1]  # raise out of range
-                if a_opt == '-a' or a_opt == '-c' or a_opt == '-s' or a_opt == '-r':
+                if a_opt == '-p' or a_opt == '-a' or a_opt == '-c' or a_opt == '-s' or a_opt == '-r':
                     print(opt_in_opt, '1')
                     sys.exit()  # raise SystemExit
             except SystemExit:
@@ -32,7 +44,7 @@ def get_args():
         elif cmd_args[i] == '-s':
             try:
                 s_opt = cmd_args[i + 1]
-                if s_opt == '-a' or s_opt == '-c' or s_opt == '-s' or s_opt == '-r':
+                if s_opt == '-p' or s_opt == '-a' or s_opt == '-c' or s_opt == '-s' or s_opt == '-r':
                     print(opt_in_opt, '2')
                     sys.exit()
             except SystemExit:
@@ -44,7 +56,7 @@ def get_args():
         elif cmd_args[i] == '-c':
             try:
                 c_opt = cmd_args[i + 1]
-                if c_opt == '-a' or c_opt == '-c' or c_opt == '-s' or c_opt == '-r':
+                if c_opt == '-p' or c_opt == '-a' or c_opt == '-c' or c_opt == '-s' or c_opt == '-r':
                     print(opt_in_opt, '3')
                     sys.exit()
             except SystemExit:
@@ -56,7 +68,7 @@ def get_args():
         elif cmd_args[i] == '-r':
             try:
                 r_opt = cmd_args[i + 1]
-                if r_opt == '-a' or r_opt == '-c' or r_opt == '-s' or r_opt == '-r':
+                if r_opt == '-p' or r_opt == '-a' or r_opt == '-c' or r_opt == '-s' or r_opt == '-r':
                     print(opt_in_opt, '4')
                     sys.exit()
             except SystemExit:
@@ -66,13 +78,13 @@ def get_args():
                 raise SystemExit
             r_check = True
         elif cmd_args[i].startswith('-'):
-            print("ERROR: incorrect opt flag")
+            print("ERROR: incorrect opt flag", cmd_args[i])
             sys.exit()
         else:
             print("ERROR: ELSE", cmd_args[i])
             sys.exit()
-    if a_check and c_check and s_check and r_check:
-        return a_opt, c_opt, s_opt, r_opt
+    if p_check and a_check and c_check and s_check and r_check:
+        return p_opt, a_opt, c_opt, s_opt, r_opt
     else:
         print("ERROR: all parameters need to be set")
         sys.exit()
@@ -107,8 +119,8 @@ def main():
     size = 1024
     s = None
     # gets commandline arguments
-    activity, city, state, radius = get_args()
-    print(activity, city, state, radius, "\n")
+    addr_port, activity, city, state, radius = get_args()
+    print(addr_port, activity, city, state, radius, "\n")
     # example of using trail API with activity, city, state, and radius
     # there are only 2 types of activites:
     # to-do: parse zipcode to city and state

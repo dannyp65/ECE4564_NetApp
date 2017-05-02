@@ -25,16 +25,6 @@ import json
 import pickle
 import hashlib
 
-# Tweepy API settings
-#ckey = 'Uifc18FYAXeIGj5dTeHO4tdfc'
-#csecret = 'J6KFnRGTAiJ0zhtazl0h6jRdw3y7u4ThnwR55w660TQRu2cXYF'
-#atoken = '831269027032997893-0QUBo1qHqWAvwqaEBmdfTHYXOZD1WVC'
-#asecret = 'ThaeUTqMis9MACGLuClIOYRCZcCPCcrCFC4D5Rq77WRNg'
-
-#auth = OAuthHandler(ckey, csecret)
-#auth.set_access_token(atoken, asecret)
-#twitterAPI = API(auth)
-
 
 # Function for command line arguments
 def get_args():
@@ -58,7 +48,7 @@ def get_args():
                 print("ERROR: no Port given")
                 raise SystemExit
             p_check = True
-        if cmd_args[i] == '-a':
+        elif cmd_args[i] == '-a':
             try:
                 a_opt = cmd_args[i + 1]  # raise out of range
                 if a_opt == '-p' or a_opt == '-a' or a_opt == '-c' or a_opt == '-s' or a_opt == '-r':
@@ -107,7 +97,7 @@ def get_args():
                 raise SystemExit
             r_check = True
         elif cmd_args[i].startswith('-'):
-            print("ERROR: incorrect opt flag")
+            print("ERROR: incorrect opt flag", cmd_args[i])
             sys.exit()
         else:
             print("ERROR: ELSE", cmd_args[i])
@@ -117,13 +107,6 @@ def get_args():
     else:
         print("ERROR: all parameters need to be set")
         sys.exit()
-
-
-# parses the received Tweet data from the Streamer
-def parse_received_text(str, user):
-    global ip, port_num, question, replyID
-    ip = str.split(':')[0].split('#')[1]
-    port_num = str.split(':')[1].split('_')[0]
 
 
 # this function generates a MD5 checksum value from string
@@ -144,19 +127,14 @@ def Check_Payload(str, checksum):
     else:
         return False
 
-# overrides tweepy.StreamListener
 
 def main():
     # gets commandline arguments
     addr_port, activity, city, state, radius = get_args()
-    print(activity, city, state, radius, "\n")
-    print('Sending Requested Parameters to Server')
-    data = (activity, city, state, radius)
-    tweet_data = json.loads(data)
-
+    print(addr_port, activity, city, state, radius, "\n")
     host = addr_port.split(':')[0]
     port = int(addr_port.split(':')[1])
-    size = 1024
+    size = 4096
     s = None
     try:
         print('Connecting to Server')
@@ -169,31 +147,33 @@ def main():
         sys.exit(1)
     print('Connected to Server')
 
-    checksum = MD5_Encode(question)  # generate a MD5 cheksum value for the question
-    tuple_data = (question, checksum)  # pack the question and checksum value into a tuple
+    data_str = ','.join((activity, city, state, radius))
+    checksum = MD5_Encode(data_str)  # generate a MD5 cheksum value for the question
+    tuple_data = (data_str, checksum)  # pack the question and checksum value into a tuple
     pickle_data = pickle.dumps(tuple_data)  # pickling the tuple
-    print('Sending Question Payload to Server')
+    print('Sending Parameters to Server')
     s.send(pickle_data)  # send pickled data to the server
 
-    receive_pickle = s.recv(size)  # receive data from the server
-    receive_data = pickle.loads(receive_pickle)  # unpickling the data
-    answer = receive_data[0]  # extract the answer
+    print('Sent and Waiting to Receive')
+    recv_pickle = s.recv(size)  # receive data from the server
+    recv_data = pickle.loads(recv_pickle)  # unpickling the data
     print('Payload Received\nChecking MD5 Checksum')
 
     # checking if the receive answer is authentic
-    if (Check_Payload(receive_data[0], receive_data[1])):
-        print('Checksum Verified')
-        print('Answer:', answer)
-        #replyText = '@' + replyID + ' #"' + answer + '"'    # constructs the reply Tweet
-        #if len(replyText) > 140:    # limits the reply tweet to 140 characters
-            #replyText = replyText[0:139] + '…'
-        #twitterAPI.update_status(status=replyText, in_reply_to_status_id=id_text)   # sends the reply
-        print('Tweet replied')
+    if (Check_Payload(recv_data[0], recv_data[1])):
+        print('Checksum Verified\n')
+        places = recv_data[0].split('[?]')[0].split('[!]')
+        weather_stats = recv_data[0].split('[?]')[1].split('[!]')
+        c = 1
+        print("Found %d Places:" % (len(places)))
+        for x in places:
+            print("%d." % c, x)
+            c += 1
+        print("-----\nTemp(Min, Current, Max): {0}{5}F, {1}{5}F, {2}{5}F \nWind Speed: {3} \nClouds: {4}\n-----\n".format(weather_stats[1], weather_stats[0], weather_stats[2], weather_stats[3], weather_stats[4], chr(176)))
     else:
         print('MD5 Verification Fail!')
     s.close()
     return True
-
 
 
 if __name__ == '__main__':  # runs the application
