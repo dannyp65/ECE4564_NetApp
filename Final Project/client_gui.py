@@ -16,11 +16,23 @@ Last modify:    02/13/2017
 
 import socket
 import sys
+from PyQt5.QtWidgets import QApplication, QWidget
+from PyQt5.QtGui import QIcon
 import time
 import json
 import pickle
 import hashlib
 
+class GUI(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.initUI()
+
+    def initUI(self):
+        self.setGeometry(300, 300, 300, 220)  # sets location and size (x, y, width, height)
+        self.setWindowTitle('Test')
+        self.setWindowIcon(QIcon(''))
+        self.show()
 
 # Function for command line arguments
 def get_args():
@@ -173,4 +185,7 @@ def main():
 
 
 if __name__ == '__main__':  # runs the application
-    main()
+    app = QApplication(sys.argv)  # need application object to start PyQt5, takes cmd line args
+    gui = GUI()
+    #main()
+    sys.exit(app.exec_())  # mainloop of app - event handling starts

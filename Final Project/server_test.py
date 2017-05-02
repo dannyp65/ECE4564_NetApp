@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import socket
+import threading
 import sys
 import time
 import requests
@@ -68,7 +69,7 @@ def main():
             s.close()
         print("Could not open socket: " + str(message))
         sys.exit(1)
-    print('Server Connected')
+    print('Server Socket Bound and Listening')
     while 1:
         print('\nWaiting to accept new connection...')
         wclient, address = s.accept()  # accept request from a client
