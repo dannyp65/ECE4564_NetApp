@@ -43,7 +43,7 @@ def get_OWM(city, state):
 
 
 def get_Google(activity, city, state, radius):
-    full_api_url = 'https://maps.googleapis.com/maps/api/place/textsearch/json?query='+ activity + '+' + city + '+' + state + '&radius=' + radius + '&key=AIzaSyCXSbe5xRL_aa-Op0AVNwJ-RsZgcCmvPSY'
+    full_api_url = 'https://maps.googleapis.com/maps/api/place/textsearch/json?query='+ activity + '+' + city + '+' + state + '&types=campground|park|natural_feature&radius=' + radius + '&key=AIzaSyCXSbe5xRL_aa-Op0AVNwJ-RsZgcCmvPSY'
     response = requests.get(full_api_url)
     return json.loads(response.text)
 
@@ -86,12 +86,14 @@ def main():
             print("Parameters Received From Client:", activity, city, state, radius)
             # example of using trail API with activity, city, state, and radius
             # there are only 2 types of activites:
-            # to-do: parse zipcode to city and state
             places = []
             trail_data = get_Google(activity, city, state, radius)
-            # stores location's name, picture, rating, length, activity type, and directions from JSON dictionary in list
+            # stores location's information from JSON dictionary in list
             for loc in trail_data["results"]:
-                places.append([loc["name"],loc["formatted_address"],loc["rating"]])
+                if (loc.get("rating")):
+                    places.append([loc["name"],loc["formatted_address"],loc["rating"]])
+                else:
+                    places.append([loc["name"],loc["formatted_address"]])
             # if nothing is found add a message to the list
             if len(places) == 0:
                 places.append("No " + activity + " locations found.")
