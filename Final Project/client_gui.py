@@ -16,23 +16,33 @@ Last modify:    02/13/2017
 
 import socket
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget
-from PyQt5.QtGui import QIcon
+from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtWidgets import *
+from PyQt5.QtGui import *
 import time
 import json
+import random
 import pickle
 import hashlib
+from mainwindow import Ui_MainWindow
+from preferences import Ui_Dialog as Dialog
 
-class GUI(QWidget):
-    def __init__(self):
-        super().__init__()
-        self.initUI()
-
-    def initUI(self):
-        self.setGeometry(300, 300, 300, 220)  # sets location and size (x, y, width, height)
-        self.setWindowTitle('Test')
-        self.setWindowIcon(QIcon(''))
-        self.show()
+states = (
+         'Alabama','Alaska','Arizona','Arkansas','California','Colorado',
+         'Connecticut','Delaware','Florida','Georgia','Hawaii','Idaho',
+         'Illinois','Indiana','Iowa','Kansas','Kentucky','Louisiana',
+         'Maine','Maryland','Massachusetts','Michigan','Minnesota',
+         'Mississippi', 'Missouri','Montana','Nebraska','Nevada',
+         'New Hampshire','New Jersey','New Mexico','New York',
+         'North Carolina','North Dakota','Ohio',
+         'Oklahoma','Oregon','Pennsylvania','Rhode Island',
+         'South  Carolina','South Dakota','Tennessee','Texas','Utah',
+         'Vermont','Virginia','Washington','West Virginia',
+         'Wisconsin','Wyoming'
+)
+activities = ('Hiking', 'Biking', 'Camping', 'Fishing')
+ports = [x for x in range(1024, 65535)]
+rand_ports = sorted(random.sample(ports, 50))
 
 # Function for command line arguments
 def get_args():
@@ -136,6 +146,51 @@ def Check_Payload(str, checksum):
         return False
 
 
+class MyMainWindow(QMainWindow, Ui_MainWindow):
+    def __init__(self):
+        QMainWindow.__init__(self)
+        self.setupUi(self)
+        self.stateComboBox.addItem('---')
+        self.stateComboBox.addItems(states)
+
+        self.actionExit.setStatusTip("Exit Application")
+        self.actionClear.setStatusTip("Clear All Forms")
+        self.actionInstructions.setStatusTip("Get Instructions on How to Use the Application")
+        self.actionPreferences.setStatusTip("Change Server Settings")
+
+        self.actionExit.triggered.connect(self.quit_app)
+        self.actionPreferences.triggered.connect(self.open_preferences)
+        self.stateComboBox.currentTextChanged.connect(self.state_changed)
+
+    def quit_app(self):
+        QtCore.QCoreApplication.instance().quit()
+
+    def open_preferences(self):
+        dialog = QtWidgets.QDialog()
+        dialog.ui = Dialog()
+        dialog.ui.setupUi(dialog)
+        dialog.ui.portComboBox.addItem('1024')
+        dialog.ui.portComboBox.addItems(str(x) for x in rand_ports)
+
+        dialog.ui.buttonBox.accepted.connect(self.settings_change)
+        dialog.ui.portComboBox.currentTextChanged.connect(self.port_changed)
+
+        dialog.exec_()
+        dialog.show()
+
+    def settings_change(self):
+        print("Changing Settings!")
+
+    def port_changed(self, p):
+        print("Port:", p)
+
+    def state_changed(self, s):
+        if s == '---':
+            self.cityComboBox.clear()
+        else:
+            print("State:", s)
+
+
 def main():
     # gets commandline arguments
     addr_port, activity, city, state, radius = get_args()
@@ -186,6 +241,7 @@ def main():
 
 if __name__ == '__main__':  # runs the application
     app = QApplication(sys.argv)  # need application object to start PyQt5, takes cmd line args
-    gui = GUI()
+    mainwindow = MyMainWindow()
+    mainwindow.show()
     #main()
     sys.exit(app.exec_())  # mainloop of app - event handling starts
