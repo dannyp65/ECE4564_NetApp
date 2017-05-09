@@ -73,6 +73,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self):
         QMainWindow.__init__(self)
         self.setupUi(self)
+        self.setWindowIcon(QIcon("./hiker_icon.jpg"))
         self.stateComboBox.addItem('---')
         self.stateComboBox.addItems(states)
         self.activityComboBox.addItem('---')
@@ -127,7 +128,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 rating = grab[5]
                 pic_ref = grab[6][1:-2]
                 addr = st_addr + ", " + city_addr + ", " + statezip_addr + ", " + country
-                print_to_browser.append([name, addr, rating])
+                print_to_browser.append([name, addr, rating, pic_ref])
             elif len(grab) == 6:
                 name = grab[0][2:-1]
                 city_addr = grab[1][:-1]
@@ -136,15 +137,24 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 rating = grab[4]
                 pic_ref = grab[5][1:-2]
                 addr = city_addr + ", " + statezip_addr + ", " + country
-                print_to_browser.append([name, addr, rating])
+                print_to_browser.append([name, addr, rating, pic_ref])
             else:
                 print("Found no results")
         c = 1
+        rating_c = 0
         for x in print_to_browser:
             self.printLabel.setText(self.printLabel.text() + "{0}. ".format(c))
             for y in x:
-                self.printLabel.setText(self.printLabel.text() + y + " ")
-            self.printLabel.setText(self.printLabel.text() + '''<br>''' + '''<a href='https://www.google.com/maps/dir/Current+Location/{0}'>Directions</a>'''.format(x[1]) + '''<br>''')
+                rating_c += 1
+                if rating_c % 3 == 0:
+                    self.printLabel.setText(self.printLabel.text() + '''<br>''' + "Rating: " + y + "/5.0")
+                elif rating_c % 4 == 0:
+                    rating_c = 0
+                else:
+                    self.printLabel.setText(self.printLabel.text() + y + " ")
+            self.printLabel.setText(self.printLabel.text() + '''<br>''' + '''<a href='https://www.google.com/maps/dir/Current+Location/{0}'>Directions</a>'''.format(x[1]))
+            self.printLabel.setText(self.printLabel.text() + "   ")
+            self.printLabel.setText(self.printLabel.text() + '''<a href='https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference={0}&key=AIzaSyCeje-BewIHbBDwXp5sL18nE81puhBNMHo'>View Image</a>'''.format(x[3]) + '''<br>''' + '''<br>''')
             c += 1
 
     def set_images(self):
