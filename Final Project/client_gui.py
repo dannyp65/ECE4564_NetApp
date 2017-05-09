@@ -21,6 +21,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 import time
 import json
+import os
 import random
 import pickle
 import hashlib
@@ -40,91 +41,13 @@ states = (
          'Vermont','Virginia','Washington','West Virginia',
          'Wisconsin','Wyoming'
 )
-activities = ('Hiking', 'Biking', 'Camping', 'Fishing')
+activities = ('Hiking', 'Camping', 'Bike Trails')
+miles = ('5', '10', '15', '20', '25', '30')
 ports = [x for x in range(1024, 65535)]
 rand_ports = sorted(random.sample(ports, 50))
-
-# Function for command line arguments
-def get_args():
-    opt_in_opt = "ERROR: cannot take another opt flag as a parameter"
-    cmd_args = sys.argv
-    cmd_len = len(cmd_args)
-    p_check, a_check, c_check, s_check, r_check = False, False, False, False, False
-    p_opt, a_opt, c_opt, s_opt, r_opt = '', '', '', '', ''
-    for i in range(1, cmd_len):
-        if cmd_args[i] == p_opt or cmd_args[i] == a_opt or cmd_args[i] == c_opt or cmd_args[i] == s_opt or cmd_args[i] == r_opt:
-            continue
-        if cmd_args[i] == '-p':
-            try:
-                p_opt = cmd_args[i + 1]  # raise out of range
-                if p_opt == '-p' or p_opt == '-a' or p_opt == '-c' or p_opt == '-s' or p_opt == '-r':
-                    print(opt_in_opt, '1')
-                    sys.exit()  # raise SystemExit
-            except SystemExit:
-                raise SystemExit
-            except:
-                print("ERROR: no Port given")
-                raise SystemExit
-            p_check = True
-        elif cmd_args[i] == '-a':
-            try:
-                a_opt = cmd_args[i + 1]  # raise out of range
-                if a_opt == '-p' or a_opt == '-a' or a_opt == '-c' or a_opt == '-s' or a_opt == '-r':
-                    print(opt_in_opt, '1')
-                    sys.exit()  # raise SystemExit
-            except SystemExit:
-                raise SystemExit
-            except:
-                print("ERROR: no Activity given")
-                raise SystemExit
-            a_check = True
-        elif cmd_args[i] == '-s':
-            try:
-                s_opt = cmd_args[i + 1]
-                if s_opt == '-p' or s_opt == '-a' or s_opt == '-c' or s_opt == '-s' or s_opt == '-r':
-                    print(opt_in_opt, '2')
-                    sys.exit()
-            except SystemExit:
-                raise SystemExit
-            except:
-                print("ERROR: no State given")
-                raise SystemExit
-            s_check = True
-        elif cmd_args[i] == '-c':
-            try:
-                c_opt = cmd_args[i + 1]
-                if c_opt == '-p' or c_opt == '-a' or c_opt == '-c' or c_opt == '-s' or c_opt == '-r':
-                    print(opt_in_opt, '3')
-                    sys.exit()
-            except SystemExit:
-                raise SystemExit
-            except:
-                print("ERROR: no City given")
-                raise SystemExit
-            c_check = True
-        elif cmd_args[i] == '-r':
-            try:
-                r_opt = cmd_args[i + 1]
-                if r_opt == '-p' or r_opt == '-a' or r_opt == '-c' or r_opt == '-s' or r_opt == '-r':
-                    print(opt_in_opt, '4')
-                    sys.exit()
-            except SystemExit:
-                raise SystemExit
-            except:
-                print("ERROR: no Radius given")
-                raise SystemExit
-            r_check = True
-        elif cmd_args[i].startswith('-'):
-            print("ERROR: incorrect opt flag", cmd_args[i])
-            sys.exit()
-        else:
-            print("ERROR: ELSE", cmd_args[i])
-            sys.exit()
-    if p_check and a_check and c_check and s_check and r_check:
-        return p_opt, a_opt, c_opt, s_opt, r_opt
-    else:
-        print("ERROR: all parameters need to be set")
-        sys.exit()
+activity, state, city, radius, host, port = '', '', '', '', '172.29.16.168', 5554
+weather_stats = []
+places = []
 
 
 # this function generates a MD5 checksum value from string
@@ -152,52 +75,152 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
         self.stateComboBox.addItem('---')
         self.stateComboBox.addItems(states)
+        self.activityComboBox.addItem('---')
+        self.activityComboBox.addItems(activities)
+        self.radiusComboBox.addItem('---')
+        self.radiusComboBox.addItems(miles)
 
         self.actionExit.setStatusTip("Exit Application")
         self.actionClear.setStatusTip("Clear All Forms")
         self.actionInstructions.setStatusTip("Get Instructions on How to Use the Application")
         self.actionPreferences.setStatusTip("Change Server Settings")
 
-        self.actionExit.triggered.connect(self.quit_app)
-        self.actionPreferences.triggered.connect(self.open_preferences)
+        self.searchButton.clicked.connect(self.search_clicked)
         self.stateComboBox.currentTextChanged.connect(self.state_changed)
+        self.activityComboBox.currentTextChanged.connect(self.activity_changed)
+        self.cityLineEdit.editingFinished.connect(self.city_changed)
+        self.radiusComboBox.currentTextChanged.connect(self.radius_changed)
+        self.actionPreferences.triggered.connect(self.open_preferences)
+        self.actionExit.triggered.connect(self.quit_app)
+
+    def state_changed(self, s):
+        global state
+        state = s
+        print("State:", state)
+
+    def activity_changed(self, a):
+        global activity
+        activity = a
+        print("Activity:", activity)
+
+    def city_changed(self):
+        global city
+        city = self.cityLineEdit.text()
+        print("City:", city)
+
+    def radius_changed(self, r):
+        global radius
+        radius = r
+        print("Radius:", radius)
+
+    def set_browser(self):
+        print_to_browser = []
+        self.printLabel.clear()
+        for x in places:
+            grab = x.split(', ')
+            if len(grab) == 7:
+                name = grab[0][2:-1]
+                st_addr = grab[1][1:]
+                city_addr = grab[2][:-1]
+                statezip_addr = grab[3]
+                country = grab[4][:-1]
+                rating = grab[5]
+                pic_ref = grab[6][1:-2]
+                addr = st_addr + ", " + city_addr + ", " + statezip_addr + ", " + country
+                print_to_browser.append([name, addr, rating])
+            elif len(grab) == 6:
+                name = grab[0][2:-1]
+                city_addr = grab[1][:-1]
+                statezip_addr = grab[2]
+                country = grab[3][:-1]
+                rating = grab[4]
+                pic_ref = grab[5][1:-2]
+                addr = city_addr + ", " + statezip_addr + ", " + country
+                print_to_browser.append([name, addr, rating])
+            else:
+                print("Found no results")
+        c = 1
+        for x in print_to_browser:
+            self.printLabel.setText(self.printLabel.text() + "{0}. ".format(c))
+            for y in x:
+                self.printLabel.setText(self.printLabel.text() + y + " ")
+            self.printLabel.setText(self.printLabel.text() + '''<br>''' + '''<a href='https://www.google.com/maps/dir/Current+Location/{0}'>Directions</a>'''.format(x[1]) + '''<br>''')
+            c += 1
+
+    def set_images(self):
+        if "rain" in weather_stats[5] or "thunderstorm" in weather_stats[5]:
+            self.rainLabel.setPixmap(QPixmap(os.getcwd() + '/weather_pics/rain.png'))
+        else:
+            self.rainLabel.setPixmap(QPixmap())
+
+        self.tempStatLabel.setText("Min: {0}{3}F, Current: {1}{3}F, Max: {2}{3}F".format(weather_stats[1], weather_stats[0], weather_stats[2], chr(176)))
+        if float(weather_stats[0]) > 70:
+            self.tempLabel.setPixmap(QPixmap(os.getcwd() + '/weather_pics/hot.png'))
+            #print("Hot temp")
+        elif 70 >= float(weather_stats[0]) > 50:
+            self.tempLabel.setPixmap(QPixmap(os.getcwd() + '/weather_pics/therm.png'))
+            #print("Normal temp")
+        else:
+            self.tempLabel.setPixmap(QPixmap(os.getcwd() + '/weather_pics/cold.png'))
+            #print("Cold temp")
+        self.windStatLabel.setText("Wind Speed: {0} miles/hour".format(weather_stats[3]))
+        if float(weather_stats[3]) > 7:
+            self.windLabel.setPixmap(QPixmap(os.getcwd() + '/weather_pics/highwind.png'))
+            #print("High wind")
+        else:
+            self.windLabel.setPixmap(QPixmap(os.getcwd() + '/weather_pics/lowwind.png'))
+            #print("Low wind")
+        self.cloudsStatLabel.setText("Cloudiness: {0}%".format(weather_stats[4]))
+        if float(weather_stats[4]) > 66:
+            self.cloudsLabel.setPixmap(QPixmap(os.getcwd() + '/weather_pics/cloudy.png'))
+            #print("Cloudy")
+        elif 66 >= float(weather_stats[4]) > 33:
+            self.cloudsLabel.setPixmap(QPixmap(os.getcwd() + '/weather_pics/partlycloudy.png'))
+            #print("Partly Cloudly")
+        else:
+            self.cloudsLabel.setPixmap(QPixmap(os.getcwd() + '/weather_pics/sunny.png'))
+            #print("Sunny")
+
+    def search_clicked(self):
+        if activity == '' or state == '' or city == '' or radius == '' or host == '' or port == '':
+            print("Something is not set in the menu or the server settings")
+        else:
+            print("Searching...")
+            main()
+
+    def open_preferences(self):
+        self.dialog = QtWidgets.QDialog()
+        self.dialog.ui = Dialog()
+        self.dialog.ui.setupUi(self.dialog)
+        self.dialog.ui.portComboBox.addItem('1024')
+        self.dialog.ui.portComboBox.addItems(str(x) for x in rand_ports)
+
+        self.dialog.ui.buttonBox.accepted.connect(self.settings_ok)
+        self.dialog.ui.ipLineEdit.editingFinished.connect(self.host_changed)
+        self.dialog.ui.portComboBox.currentTextChanged.connect(self.port_changed)
+
+        self.dialog.exec_()
+        self.dialog.show()
+
+    def port_changed(self, p):
+        global port
+        port = int(p)
+        print("Port:", port)
+
+    def host_changed(self):
+        global host
+        host = self.dialog.ui.ipLineEdit.text()
+        print("Host:", host)
+
+    def settings_ok(self):
+        self.statusbar.showMessage("Server Settings Changed")
+        print("Ok")
 
     def quit_app(self):
         QtCore.QCoreApplication.instance().quit()
 
-    def open_preferences(self):
-        dialog = QtWidgets.QDialog()
-        dialog.ui = Dialog()
-        dialog.ui.setupUi(dialog)
-        dialog.ui.portComboBox.addItem('1024')
-        dialog.ui.portComboBox.addItems(str(x) for x in rand_ports)
-
-        dialog.ui.buttonBox.accepted.connect(self.settings_change)
-        dialog.ui.portComboBox.currentTextChanged.connect(self.port_changed)
-
-        dialog.exec_()
-        dialog.show()
-
-    def settings_change(self):
-        print("Changing Settings!")
-
-    def port_changed(self, p):
-        print("Port:", p)
-
-    def state_changed(self, s):
-        if s == '---':
-            self.cityComboBox.clear()
-        else:
-            print("State:", s)
-
-
 def main():
-    # gets commandline arguments
-    addr_port, activity, city, state, radius = get_args()
-    print(addr_port, activity, city, state, radius, "\n")
-    host = addr_port.split(':')[0]
-    port = int(addr_port.split(':')[1])
-    size = 4096
+    size = 16384
     s = None
     try:
         print('Connecting to Server')
@@ -223,16 +246,14 @@ def main():
     print('Payload Received\nChecking MD5 Checksum')
 
     # checking if the receive answer is authentic
-    if (Check_Payload(recv_data[0], recv_data[1])):
+    if Check_Payload(recv_data[0], recv_data[1]):
+        global weather_stats, places
         print('Checksum Verified\n')
         places = recv_data[0].split('[?]')[0].split('[!]')
         weather_stats = recv_data[0].split('[?]')[1].split('[!]')
-        c = 1
-        print("Found %d Places:" % (len(places)))
-        for x in places:
-            print("%d." % c, x)
-            c += 1
-        print("-----\nTemp(Min, Current, Max): {0}{5}F, {1}{5}F, {2}{5}F \nWind Speed: {3} \nClouds: {4}\n-----\n".format(weather_stats[1], weather_stats[0], weather_stats[2], weather_stats[3], weather_stats[4], chr(176)))
+        #print("-----\nTemp(Min, Current, Max): {0}{5}F, {1}{5}F, {2}{5}F \nWind Speed: {3}mi/hr \nClouds: {4}%\nRain: {6}\n-----\n".format(weather_stats[1], weather_stats[0], weather_stats[2], weather_stats[3], weather_stats[4], chr(176), weather_stats[5]))
+        mainwindow.set_images()
+        mainwindow.set_browser()
     else:
         print('MD5 Verification Fail!')
     s.close()
@@ -243,5 +264,4 @@ if __name__ == '__main__':  # runs the application
     app = QApplication(sys.argv)  # need application object to start PyQt5, takes cmd line args
     mainwindow = MyMainWindow()
     mainwindow.show()
-    #main()
     sys.exit(app.exec_())  # mainloop of app - event handling starts
