@@ -17,6 +17,6 @@ def main():
 
 if __name__ == "__main__":
     photoref = "CmRYAAAAcgHBFh51PP5mv4-BZy_l5FVVb4FNst1ZrNFnj3LtnglnlfVQT06foFBzRvqSBKoFFHj5NJ6g4c_mDocwVPyVGSVXMb5o8sY3jjuuSEKXjjqabAMoseai11XbZkJNinrSEhCT2zPrAVtZg-xHis8mSAEzGhRkzIRgFwfuMeQl4s3PxWmvifmSAQ"
-    photorul = 'https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=' + photoref + '&key=AIzaSyCXSbe5xRL_aa-Op0AVNwJ-RsZgcCmvPSY'
+    photorul = 'https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=' + photoref + '&key=AIzaSyCeje-BewIHbBDwXp5sL18nE81puhBNMHo'
     print(photorul)
    
