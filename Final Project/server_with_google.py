@@ -47,7 +47,6 @@ def get_Google(activity, city, state, radius):
     response = requests.get(full_api_url)
     return json.loads(response.text)
 
-
 def main():
     host = ''
     port = 1234
@@ -91,9 +90,15 @@ def main():
             # stores location's information from JSON dictionary in list
             for loc in trail_data["results"]:
                 if (loc.get("rating")):
-                    places.append([loc["name"],loc["formatted_address"],loc["rating"]])
+                    if (loc.get("photos")):
+                        places.append([loc["name"],loc["formatted_address"],loc["rating"], loc["photos"]])
+                    else:
+                        places.append([loc["name"],loc["formatted_address"],loc["rating"]])
                 else:
-                    places.append([loc["name"],loc["formatted_address"]])
+                    if (loc.get("photos")):
+                        places.append([loc["name"],loc["formatted_address"],loc["photos"]])
+                    else:
+                        places.append([loc["name"],loc["formatted_address"]])
             # if nothing is found add a message to the list
             if len(places) == 0:
                 places.append("No " + activity + " locations found.")
