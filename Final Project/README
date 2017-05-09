@@ -1,0 +1,38 @@
+Final Project - JANK Outdoors
+Team 16 - Team JANK
+
+Interperter: Python 3.5.x only
+
+Initialize process:
+  In order to run the final project, the user must obtain the Server's IP address. The server must be running when the user wishes to proceed.  
+    
+  Server Raspberry Pi:
+    1. Open command prompt and type 'hostname -I' to obtain the Server's IP address 
+    2. Make sure that all the extra libraries were installed on your Rapsberry Pi (see Extra Libraries)
+    3. Run "JANK_server.py" via the command line on the Raspberry Pi.  
+	Note:The server should output that it is running and awaiting a connection from the Client.
+    4.  The server can be left running in order for the GUI to request multiple different search parameters.    
+    
+  GUI Application:
+    1. Make sure that all extra libraries are installed on the machine that will be running the GUI.  
+    2. Run the client code "JANK_client.py" which opens the GUI.
+    3. When the GUI is opened, the user will be prompted to input their activity, city, state, and radius.  
+	Note: Due to this being a outdoors application, specific paramters are set in the server code to only produce outdoor results.
+    4. The GUI can be used multiple times due to the structure of the application and server.  
+    
+    
+Extra Libraries:
+	-socket
+	-threading
+	-sys
+	-time
+	-requests
+	-zipcode
+	-json
+	-pickle
+	-haslib
+	-rpi.gpio
+	-PyQt5
+	-random
+	-mainwindow
+	-preferences
